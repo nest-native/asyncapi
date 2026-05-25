@@ -12,7 +12,7 @@
 
 ## 1. Read these first
 
-This package's constitution is `AI_CODING_GUIDELINES.md` at the repo
+This package's constitution is `.briefing/AI_CODING_GUIDELINES.md` at the repo
 root. Read it end-to-end before writing code. It is the SOLE governing
 document for this package — no other guideline files apply.
 
@@ -142,12 +142,12 @@ scaffolding, mock broker / contract testing, OpenAPI → AsyncAPI conversion.
 
 ## 10. Quality gates
 
-Same as the existing two packages. See `AI_CODING_GUIDELINES.md` §9–§11.
+Same as the existing two packages. See `.briefing/AI_CODING_GUIDELINES.md` §9–§11.
 
 ## 11. Milestones
 
 1. **Bootstrap.** Repo skeleton, empty package, CI green. Tag
-   `v0.0.1-scaffold`. (`AI_CODING_GUIDELINES.md` is already at the repo
+   `v0.0.1-scaffold`. (`.briefing/AI_CODING_GUIDELINES.md` is already at the repo
    root from the initial commit; no need to create it.)
 2. Spec generator skeleton: walks NestJS metadata, emits an empty valid
    3.0 doc.
@@ -163,7 +163,7 @@ Same as the existing two packages. See `AI_CODING_GUIDELINES.md` §9–§11.
 
 ## 12. First-session checklist
 
-1. Read `AI_CODING_GUIDELINES.md` in full (the constitution).
+1. Read `.briefing/AI_CODING_GUIDELINES.md` in full (the constitution).
 2. Read this brief end-to-end.
 3. Skim the AsyncAPI 3.0 spec
    (https://www.asyncapi.com/docs/reference/specification/v3.0.0) —
@@ -199,7 +199,7 @@ Same as the existing two packages. See `AI_CODING_GUIDELINES.md` §9–§11.
 
 - AsyncAPI 3.0 spec:
   https://www.asyncapi.com/docs/reference/specification/v3.0.0
-- This project's constitution: `AI_CODING_GUIDELINES.md` at the repo root.
+- This project's constitution: `.briefing/AI_CODING_GUIDELINES.md`.
 - Existing nest-native packages as concrete templates:
   - https://github.com/nest-native/nest-drizzle-native
   - https://github.com/nest-native/nest-trpc-native
