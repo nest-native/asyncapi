@@ -1,0 +1,161 @@
+# GUIDELINES_NEST_ASYNCAPI.md
+
+## Core Philosophy — This library MUST feel native in NestJS projects
+
+Every decision must follow NestJS philosophy as `@nestjs/swagger` does, while
+staying faithful to AsyncAPI 3.0's channels/operations/messages model. The
+bar is: feel like the AsyncAPI counterpart to `@nestjs/swagger`, generate
+spec-compliant output, never hide AsyncAPI semantics.
+
+### 1. Overall Architecture Assumptions (never break these)
+
+- First-class NestJS integration, not a thin wrapper around AsyncAPI tooling.
+- Decorator-first, OOP, heavy use of NestJS DI.
+- Mirror the DX of `@nestjs/swagger` (decorator-based metadata +
+  generate-on-build) for the event/message side.
+- Documentation only — this is NOT a runtime transport. Use
+  `@nestjs/microservices` or `nest-kafka-native` for transport.
+- Current stabilization support line:
+  - Node.js `>=20`
+  - NestJS `11.x`
+  - AsyncAPI spec target 3.0 (2.x: best-effort conversion only)
+- AsyncAPI viewer: `@asyncapi/react-component` rendered at a configurable
+  route.
+- Support both validation worlds for message payloads:
+  - `class-validator` + DTOs (default; metadata-driven JSON Schema,
+    mirroring `@nestjs/swagger`)
+  - Zod (optional; via `zod-to-json-schema`)
+
+### 2. Public API Assumptions (this is what users will copy-paste)
+
+- Module:
+  - `AsyncApiModule.forRoot(options)`
+  - `AsyncApiModule.forRootAsync(options)`
+- Decorators (mirror `@nestjs/swagger` naming):
+  - `@AsyncApiChannel('channel-id', options)` — class-level on a handler
+  - `@AsyncApiPub({...})` / `@AsyncApiSub({...})` — method-level
+  - `@AsyncApiMessage(MessageDto)` — payload metadata
+  - `@AsyncApiHeaders(HeadersDto)` — headers metadata
+  - `@AsyncApiServer(name, options)` — server declaration
+- Function-level helpers:
+  - `getAsyncApiDocument(app, config)` — analogous to
+    `SwaggerModule.createDocument`
+- Discovery uses NestJS metadata reflection exactly as `@nestjs/swagger`
+  does for `@Controller`.
+
+### 3. First-Version Scope Discipline
+
+- v1 ships:
+  - AsyncAPI 3.0 spec generation from decorated handlers
+  - Hosted docs route with viewer
+  - Bindings for Kafka, NATS, MQTT, AMQP (transport identifiers and
+    connection metadata at minimum)
+  - Integration with `@nestjs/microservices` handlers (`@MessagePattern`,
+    `@EventPattern`)
+  - Optional integration with `nest-kafka-native` if shipped
+  - DTO ↔ JSON Schema generation via the path `@nestjs/swagger` uses
+- v1 does NOT ship:
+  - Full AsyncAPI 2.x support (best-effort conversion or none)
+  - Spec-driven scaffolding (spec → code)
+  - Mock broker / contract testing
+  - OpenAPI → AsyncAPI conversion
+
+### 4. Sample Folder Rules
+
+- `sample/00-showcase` demonstrates:
+  - All five decorators end-to-end
+  - Both class-validator and Zod validation paths
+  - Multiple transport bindings (Kafka + NATS at minimum)
+  - Docs route with live viewer
+  - Generated spec validated against `@asyncapi/parser`
+- Focused samples: one per binding, one per validation style, one for
+  `forRootAsync`, one for migration from `nestjs-asyncapi`.
+- The showcase must produce a valid AsyncAPI 3.0 spec on every run.
+- Never simplify the showcase for brevity — richness proves the integration
+  depth.
+
+### 5. Implementation Rules
+
+- Spec generator is metadata-driven; it walks NestJS `MetadataScanner`
+  exactly as `@nestjs/swagger` does.
+- Generated output must pass `@asyncapi/parser` validation. Treat parser
+  errors as build failures.
+- Viewer assets: bundled if reasonably small; otherwise via documented
+  `peerDependencies` install.
+- Output format: YAML default, JSON optional; document the convention.
+- Never invent non-standard AsyncAPI extensions. Use spec primitives only.
+- Schema generation reuses the `@nestjs/swagger` chain when class-validator
+  is in play. Do not introduce a parallel schema reflector.
+- Keep the package lean — `"dependencies": {}`. AsyncAPI parser, viewer,
+  and Nest packages in `peerDependencies`.
+- Never expose AsyncAPI tooling internals unless the user opts in via
+  advanced config.
+
+### 6. Non-Negotiable Style & Patterns
+
+- NestJS naming conventions (`@nestjs/common` style).
+- Constructor injection.
+- Documentation and README follow Nest-style clarity without claiming
+  official Nest or AsyncAPI status.
+- Preserve clear API tiers: onboarding focuses on `AsyncApiModule` and the
+  five decorators. Advanced features (custom bindings, custom servers,
+  spec post-processing) stay in dedicated sections.
+
+### 7. When In Doubt
+
+- Ask: "Would this feel natural in `@nestjs/swagger` while still feeling
+  like real AsyncAPI 3.0?"
+- If the answer is no, redesign.
+
+### 8. Differentiation Strategy
+
+- AsyncAPI 3.0 native — the abandoned `nestjs-asyncapi` is 2.x and broken
+  on current Node/NestJS.
+- Mirrors `@nestjs/swagger`'s familiar shape exactly — same mental model
+  for any Nest user who has documented an HTTP API.
+- Validated output: every generated spec passes the official parser.
+- Documentation route comes with a working viewer; not a "wire it
+  yourself" experience.
+
+### 9. Security Review Requirements (MANDATORY)
+
+- Every PR includes an explicit security pass.
+- Supply-chain checks are NON-NEGOTIABLE:
+  - Every dependency addition/update reviewed for legitimacy.
+  - `packages/asyncapi/package.json` must keep `"dependencies": {}`.
+  - Viewer asset bundling reviewed at every update for size and
+    supply-chain risk.
+  - Inspect lifecycle scripts on every dep change.
+  - Flag unpinned Git/URL dependencies.
+- Application security checks:
+  - Docs route auth boundaries (the spec may leak schema details that
+    aren't intended for unauthenticated readers).
+  - XSS in the viewer's rendered content.
+  - No secrets in generated example payloads.
+  - URL-injection in `@AsyncApiServer` configurations.
+
+### 10. Release Version Synchronization (MANDATORY)
+
+- Version drift between `packages/asyncapi` and `sample/*` is a release
+  blocker.
+- When bumping `packages/asyncapi/package.json`, update all
+  `sample/*/package.json` entries for `"nest-asyncapi-native"` in the same
+  change.
+- Regenerate `package-lock.json`. Run `npm run release:check`. Run
+  `npm run ci`.
+- Post-publish: re-run full CI with samples pinned to the published version.
+
+### 11. Cognitive Complexity Review
+
+- When changes touch `packages/asyncapi/**/*.ts`, run
+  `npm run complexity:check` and `npm run complexity:report`.
+- CI enforces SonarJS cognitive-complexity threshold of `15` per package
+  source function.
+- Do not reduce complexity by weakening generator correctness, public API
+  clarity, or test coverage.
+
+### 12. Accumulated Project Decisions
+
+(Empty at v0; grows as the project lands decisions worth preserving. Append
+entries here when an architectural call repeats or is non-obvious. Each
+entry should be one short paragraph with rationale.)
