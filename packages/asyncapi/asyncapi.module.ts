@@ -1,4 +1,11 @@
-import { DynamicModule, Module, Provider } from '@nestjs/common';
+import {
+  DynamicModule,
+  INestApplication,
+  Module,
+  Provider,
+} from '@nestjs/common';
+import { AsyncApiDocsOptions, setupAsyncApiDocs } from './docs';
+import { AsyncApiDocument } from './document';
 import {
   AsyncApiModuleAsyncOptions,
   AsyncApiModuleOptions,
@@ -59,5 +66,27 @@ export class AsyncApiModule {
       providers: [...(options.extraProviders ?? []), optionsProvider],
       exports: [optionsProvider],
     };
+  }
+
+  /**
+   * Serve a generated AsyncAPI document and its viewer over a running NestJS
+   * application's HTTP server.
+   *
+   * This mirrors `SwaggerModule.setup`: pass the document produced by
+   * {@link getAsyncApiDocument} and a base route, and the viewer page is mounted
+   * at `path` with the raw JSON and YAML at `${path}-json` / `${path}-yaml`
+   * (both overridable). The routes attach to the application's existing HTTP
+   * adapter, so it works on `@nestjs/platform-express` and
+   * `@nestjs/platform-fastify` alike.
+   *
+   * @returns The normalized routes the docs were mounted on.
+   */
+  static setup(
+    path: string,
+    app: INestApplication,
+    document: AsyncApiDocument,
+    options?: AsyncApiDocsOptions,
+  ): { uiUrl: string; jsonUrl: string; yamlUrl: string } {
+    return setupAsyncApiDocs(path, app, document, options);
   }
 }

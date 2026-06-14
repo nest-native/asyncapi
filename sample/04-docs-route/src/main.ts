@@ -5,12 +5,12 @@ import { AppModule } from './app.module';
 import { createAsyncApiDocument } from './asyncapi';
 
 /**
- * Bootstrap the showcase, generate the AsyncAPI 3.0 document, and serve it with
- * the live viewer.
+ * Bootstrap the docs-route sample.
  *
- * `AsyncApiModule.setup` mirrors `SwaggerModule.setup`: it mounts the viewer at
- * `/async-docs` and the raw JSON/YAML spec at `/async-docs-json` and
- * `/async-docs-yaml` on the application's HTTP server.
+ * The flow mirrors `@nestjs/swagger`: create the HTTP application, generate the
+ * document from the decorated handlers, then mount the viewer and the raw
+ * JSON/YAML spec with `AsyncApiModule.setup` before the app starts listening.
+ * Open `http://localhost:3000/async-docs` for the live viewer.
  */
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
