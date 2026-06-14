@@ -6,18 +6,19 @@
   <a href="https://www.npmjs.com/package/@nest-native/asyncapi"><img src="https://img.shields.io/npm/v/@nest-native/asyncapi.svg" alt="NPM Version" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Package License" /></a>
   <img src="https://img.shields.io/badge/coverage-100%25-brightgreen.svg" alt="Test Coverage" />
-  <img src="https://img.shields.io/badge/status-scaffold-orange.svg" alt="Status: scaffold" />
+  <img src="https://img.shields.io/badge/status-alpha-orange.svg" alt="Status: alpha" />
 </p>
 
 > [!WARNING]
-> **Status: scaffold / under construction.** This repository is at its bootstrap
-> milestone (`v0.0.1-scaffold`). The npm workspace builds, typechecks, tests at
-> 100% coverage, and is CI-green, but the public decorator API is not
-> implemented yet. Only `AsyncApiModule.forRoot()` /
-> `AsyncApiModule.forRootAsync()` exist. The AsyncAPI decorators
-> (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`, `@AsyncApiMessage`,
-> `@AsyncApiHeaders`, `@AsyncApiServer`), the document generator, and the sample
-> catalog arrive in later milestones. Do not depend on this in production yet.
+> **Status: under construction.** The npm workspace builds, typechecks, tests at
+> 100% coverage, and is CI-green. `AsyncApiModule.forRoot()` /
+> `AsyncApiModule.forRootAsync()` and the spec-generator skeleton
+> (`getAsyncApiDocument()`) exist: the generator walks NestJS metadata exactly as
+> `@nestjs/swagger` walks controllers and emits an empty but valid AsyncAPI 3.0
+> document. The AsyncAPI decorators (`@AsyncApiChannel`, `@AsyncApiPub`,
+> `@AsyncApiSub`, `@AsyncApiMessage`, `@AsyncApiHeaders`, `@AsyncApiServer`) that
+> populate channels and operations, and the sample catalog, arrive in later
+> milestones. Do not depend on this in production yet.
 
 ## What This Is
 
@@ -96,10 +97,9 @@ Required peers:
 npm i @nestjs/common @nestjs/core reflect-metadata rxjs
 ```
 
-## Usage (scaffold)
+## Usage (preview)
 
-At this milestone the module only wires global configuration. The AsyncAPI
-decorators and document generator are not implemented yet.
+Register the module to wire global configuration:
 
 ```ts
 import { Module } from '@nestjs/common';
@@ -129,6 +129,28 @@ AsyncApiModule.forRootAsync({
 Both registrations return a global `DynamicModule` by default. Pass
 `isGlobal: false` to scope it to a single module boundary.
 
+### Generating a document
+
+`getAsyncApiDocument()` is the AsyncAPI counterpart to
+`SwaggerModule.createDocument`. It walks the running application's NestJS
+metadata — the same `ModulesContainer` and `MetadataScanner` `@nestjs/swagger`
+uses for controllers — and returns a spec-compliant AsyncAPI 3.0 document. Until
+the decorator milestones land, the discovered handlers contribute no channels or
+operations, so the result is an empty but valid 3.0 document:
+
+```ts
+import { NestFactory } from '@nestjs/core';
+import { getAsyncApiDocument } from '@nest-native/asyncapi';
+
+const app = await NestFactory.create(AppModule);
+
+const document = getAsyncApiDocument(app, {
+  title: 'Orders Service',
+  version: '1.0.0',
+});
+// => { asyncapi: '3.0.0', info: { title, version }, channels: {}, operations: {}, components: {} }
+```
+
 ## Quality Gates
 
 The repository ships the same review posture as its sibling `@nest-native`
@@ -149,10 +171,11 @@ npm run ci
 
 ## Status and Roadmap
 
-This is the bootstrap milestone. The planned path:
+The spec-generator skeleton has landed. The planned path:
 
-1. **Bootstrap** — repo skeleton, empty package, CI green (this milestone).
-2. Spec generator skeleton: walks NestJS metadata, emits an empty valid 3.0 doc.
+1. ~~**Bootstrap** — repo skeleton, empty package, CI green.~~ ✅
+2. **Spec generator skeleton: walks NestJS metadata, emits an empty valid 3.0
+   doc.** ✅ (current)
 3. `@AsyncApiChannel` + `@AsyncApiPub` / `@AsyncApiSub` with a showcase sample.
 4. DTO ↔ JSON Schema integration, validated against `@asyncapi/parser`.
 5. Transport bindings for Kafka, NATS, MQTT, AMQP.
