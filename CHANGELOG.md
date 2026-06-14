@@ -8,7 +8,17 @@ package release is useful for users.
 
 ## Unreleased
 
-No user-facing changes yet.
+### Added
+
+- Spec-generator skeleton. `getAsyncApiDocument(app, config)` — the AsyncAPI
+  counterpart to `SwaggerModule.createDocument` — walks the running
+  application's NestJS metadata (the same `ModulesContainer` and
+  `MetadataScanner` `@nestjs/swagger` uses for controllers) and emits an empty
+  but valid AsyncAPI 3.0 document.
+- `AsyncApiDocument` type model for the emitted document, an `AsyncApiDocumentConfig`
+  for document-level `info` metadata, and an `AsyncApiDocumentScanner` that
+  performs the metadata walk. Channels, operations, and components are emitted
+  empty until the decorator milestones populate them.
 
 ## 0.0.0 - 2026-06-13
 
