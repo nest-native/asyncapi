@@ -1,0 +1,47 @@
+name: Sample request
+description: Request a focused runnable sample.
+title: "sample: "
+labels:
+  - sample
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario
+      description: What real event-driven scenario should the sample demonstrate?
+    validations:
+      required: true
+  - type: dropdown
+    id: sample-area
+    attributes:
+      label: Area
+      options:
+        - "@AsyncApiChannel with @AsyncApiPub / @AsyncApiSub"
+        - "@AsyncApiMessage with class-validator DTOs"
+        - "@AsyncApiMessage with Zod"
+        - "@AsyncApiServer declarations"
+        - Kafka binding
+        - NATS binding
+        - MQTT binding
+        - AMQP binding
+        - "@nestjs/microservices integration"
+        - docs route and viewer
+        - forRootAsync configuration
+        - migration from nestjs-asyncapi
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: expected-files
+    attributes:
+      label: Expected shape
+      description: Mention the important modules, handlers, DTOs, servers, or smoke tests the sample should include.
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Sample rules
+      options:
+        - label: The sample should be runnable from a clean checkout and produce a valid AsyncAPI 3.0 spec.
+          required: true
+        - label: Package changes should be split into a separate PR if the sample exposes a library bug.
+          required: true

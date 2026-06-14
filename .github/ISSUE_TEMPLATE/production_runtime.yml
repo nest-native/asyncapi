@@ -1,0 +1,114 @@
+name: Production/runtime issue
+description: Report a production-like problem with spec generation, the docs route, viewer rendering, transport bindings, deployment, or dependency updates.
+title: "prod: "
+labels:
+  - bug
+  - production
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for issues that appear in production, staging, CI, or production-like environments.
+
+        Do not paste secrets, API keys, production tokens, private certificates, customer data, or unredacted hostnames or broker URLs. Redact values before submitting.
+  - type: dropdown
+    id: production-area
+    attributes:
+      label: Production area
+      options:
+        - spec generation from decorated handlers
+        - generated spec fails @asyncapi/parser validation
+        - docs route or viewer rendering
+        - transport binding (Kafka/NATS/MQTT/AMQP)
+        - "@nestjs/microservices integration"
+        - DTO / JSON Schema mapping
+        - dependency update or supply-chain change
+        - release or package consumption
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What failed, who is affected, and what workaround exists?
+      placeholder: "Generated spec omits the message payload schema for class-validator DTOs, so the docs route renders an empty message."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction or failing flow
+      description: Link a reproduction repo or describe the smallest production-like flow that fails.
+    validations:
+      required: true
+  - type: input
+    id: package-version
+    attributes:
+      label: "@nest-native/asyncapi version"
+      placeholder: "0.0.0"
+    validations:
+      required: true
+  - type: input
+    id: nest-version
+    attributes:
+      label: NestJS version
+      placeholder: "11.x"
+    validations:
+      required: true
+  - type: input
+    id: asyncapi-version
+    attributes:
+      label: AsyncAPI spec target
+      placeholder: "3.0"
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      placeholder: "20.x, 22.x, 24.x"
+    validations:
+      required: true
+  - type: input
+    id: transport
+    attributes:
+      label: Transport and binding
+      placeholder: "Kafka, NATS, MQTT, AMQP, or not transport-specific"
+    validations:
+      required: true
+  - type: textarea
+    id: module-setup
+    attributes:
+      label: AsyncApiModule setup
+      description: Paste the relevant forRoot/forRootAsync shape with secrets and broker URLs redacted.
+      render: ts
+    validations:
+      required: true
+  - type: textarea
+    id: spec-setup
+    attributes:
+      label: Generation setup
+      description: Mention which decorators are involved, the validation source (class-validator or Zod), and whether the failure is in generation or in parser validation.
+  - type: textarea
+    id: dependency-change
+    attributes:
+      label: Recent dependency or lockfile change
+      description: Mention Dependabot PRs, manual upgrades, or lockfile churn if the problem started after a dependency change.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste stack traces, parser errors, or command output with secrets, tokens, hostnames, and broker URLs redacted.
+      render: text
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checklist
+      options:
+        - label: I removed or redacted secrets, API keys, tokens, hostnames, broker URLs, and private certificates.
+          required: true
+        - label: I did not include customer data or personally identifiable information.
+          required: true
+        - label: I included enough version and transport information for maintainers to reproduce the issue.
+          required: true

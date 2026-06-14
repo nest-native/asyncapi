@@ -1,0 +1,102 @@
+name: Bug report
+description: Report a reproducible problem in @nest-native/asyncapi.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please include enough detail for maintainers to reproduce it without guessing about your Nest, transport, decorator, or generated-spec setup.
+        Do not paste secrets, API keys, production tokens, private certificates, customer data, or unredacted hostnames or broker URLs.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the behavior you saw and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Link to a minimal repo or paste the smallest code snippet that demonstrates the issue.
+      placeholder: |
+        AsyncApiModule.forRoot({
+          defaultInfo: { title: 'Orders API' },
+        });
+    validations:
+      required: true
+  - type: input
+    id: package-version
+    attributes:
+      label: "@nest-native/asyncapi version"
+      placeholder: "0.0.0"
+    validations:
+      required: true
+  - type: input
+    id: nest-version
+    attributes:
+      label: NestJS version
+      placeholder: "11.x"
+    validations:
+      required: true
+  - type: input
+    id: asyncapi-version
+    attributes:
+      label: AsyncAPI spec target
+      placeholder: "3.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport
+      options:
+        - Kafka
+        - NATS
+        - MQTT
+        - AMQP
+        - WebSocket
+        - not transport-specific
+        - other
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - AsyncApiModule registration
+        - "@AsyncApiChannel"
+        - "@AsyncApiPub / @AsyncApiSub"
+        - "@AsyncApiMessage / @AsyncApiHeaders"
+        - "@AsyncApiServer"
+        - document generation
+        - DTO / JSON Schema mapping
+        - docs route or viewer
+        - samples or docs
+        - release or CI
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: spec-setup
+    attributes:
+      label: Generation setup, if relevant
+      description: Mention which decorators are involved, the validation source (class-validator or Zod), and whether the issue is in the generated spec or in parser validation.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste stack traces, parser errors, or command output. Redact secrets, tokens, hostnames, and broker URLs.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I removed or redacted secrets, API keys, and broker URLs.
+          required: true
+        - label: I checked the docs and samples for the same pattern.
+          required: true

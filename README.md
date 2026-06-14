@@ -1,5 +1,171 @@
 # @nest-native/asyncapi
 
-> Decorator-first AsyncAPI 3.0 documentation generator for NestJS event-driven services — the AsyncAPI counterpart to @nestjs/swagger.
+<p align="center">Decorator-first AsyncAPI 3.0 documentation generator for NestJS event-driven services — the AsyncAPI counterpart to @nestjs/swagger.</p>
 
-🚧 Under active construction. Part of the [nest-native](https://github.com/nest-native) family, alongside [@nest-native/drizzle](https://github.com/nest-native/drizzle) and [@nest-native/trpc](https://github.com/nest-native/trpc).
+<p align="center">
+  <a href="https://www.npmjs.com/package/@nest-native/asyncapi"><img src="https://img.shields.io/npm/v/@nest-native/asyncapi.svg" alt="NPM Version" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Package License" /></a>
+  <img src="https://img.shields.io/badge/coverage-100%25-brightgreen.svg" alt="Test Coverage" />
+  <img src="https://img.shields.io/badge/status-scaffold-orange.svg" alt="Status: scaffold" />
+</p>
+
+> [!WARNING]
+> **Status: scaffold / under construction.** This repository is at its bootstrap
+> milestone (`v0.0.1-scaffold`). The npm workspace builds, typechecks, tests at
+> 100% coverage, and is CI-green, but the public decorator API is not
+> implemented yet. Only `AsyncApiModule.forRoot()` /
+> `AsyncApiModule.forRootAsync()` exist. The AsyncAPI decorators
+> (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`, `@AsyncApiMessage`,
+> `@AsyncApiHeaders`, `@AsyncApiServer`), the document generator, and the sample
+> catalog arrive in later milestones. Do not depend on this in production yet.
+
+## What This Is
+
+`@nest-native/asyncapi` is a community NestJS integration that generates
+[AsyncAPI 3.0](https://www.asyncapi.com/docs/reference/specification/v3.0.0)
+documentation for event-driven services. The goal is a decorator-first,
+Nest-native experience — the event/message counterpart to `@nestjs/swagger` for
+HTTP. You decorate your `@nestjs/microservices` handlers and message DTOs, and
+the package walks the same NestJS metadata `@nestjs/swagger` uses to emit a
+spec-compliant `asyncapi.json` / `asyncapi.yaml`, served alongside an AsyncAPI
+viewer.
+
+It uses AsyncAPI spec primitives only; it does not hide AsyncAPI semantics
+behind a facade. It is documentation only — not a runtime transport.
+
+## Why
+
+AsyncAPI documentation for NestJS is effectively unserved today:
+
+- `nestjs-asyncapi` is the de-facto generator and is effectively abandoned:
+  AsyncAPI 3.0 was requested in Dec 2023 with no progress
+  ([`#518`](https://github.com/flamewow/nestjs-asyncapi/issues/518)), it breaks
+  on current Node and `@nestjs/swagger`
+  ([`#596`](https://github.com/flamewow/nestjs-asyncapi/issues/596)), and users
+  openly ask whether it is still maintained
+  ([`#578`](https://github.com/flamewow/nestjs-asyncapi/issues/578)).
+- There is no official `@nestjs/asyncapi` to replace it.
+
+This package's headline differentiators:
+
+- **AsyncAPI 3.0 native** — built around the channels/operations/messages model
+  that 3.0 introduced, not a 2.x port.
+- **`@nestjs/swagger` mental model** — the same decorator-first, generate-on-build
+  flow any Nest user already knows from documenting an HTTP API.
+- **Validated output** — every generated spec is treated as valid only when it
+  passes the official `@asyncapi/parser`.
+- **A working docs route** — the viewer comes wired, not "bring your own".
+
+## Compatibility
+
+| Runtime | Supported line |
+| --- | --- |
+| Node.js | `>=20` |
+| NestJS | `11.x` |
+| AsyncAPI spec target | `3.0` (2.x: best-effort conversion only) |
+| Transports | Kafka, NATS, MQTT, AMQP (bindings arrive in later milestones) |
+| Validation | Zod and class-validator, both app-owned |
+
+The published package keeps `"dependencies": {}`. The NestJS packages are
+declared as `peerDependencies`, and the AsyncAPI parser and viewer are optional
+peers, so applications install only the ecosystems they actually use.
+
+## Repository Layout
+
+This repository contains:
+
+- [`packages/asyncapi`](packages/asyncapi): the `@nest-native/asyncapi` integration package
+- [`scripts`](scripts): quality, coverage, complexity, and release-check helpers
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): contributor workflow, including the
+  sample/library PR separation rule
+- [`CHANGELOG.md`](CHANGELOG.md): release history and unreleased changes
+- [`SECURITY.md`](SECURITY.md): vulnerability reporting and project security boundaries
+
+Samples and a documentation site are part of the public learning path and arrive
+in later milestones.
+
+## Installation
+
+```bash
+npm i @nest-native/asyncapi
+```
+
+Required peers:
+
+```bash
+npm i @nestjs/common @nestjs/core reflect-metadata rxjs
+```
+
+## Usage (scaffold)
+
+At this milestone the module only wires global configuration. The AsyncAPI
+decorators and document generator are not implemented yet.
+
+```ts
+import { Module } from '@nestjs/common';
+import { AsyncApiModule } from '@nest-native/asyncapi';
+
+@Module({
+  imports: [
+    AsyncApiModule.forRoot({
+      defaultInfo: { title: 'Orders Service', version: '1.0.0' },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+Async configuration is supported through `AsyncApiModule.forRootAsync()`:
+
+```ts
+AsyncApiModule.forRootAsync({
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    defaultInfo: { title: config.getOrThrow('SERVICE_NAME') },
+  }),
+});
+```
+
+Both registrations return a global `DynamicModule` by default. Pass
+`isGlobal: false` to scope it to a single module boundary.
+
+## Quality Gates
+
+The repository ships the same review posture as its sibling `@nest-native`
+packages, using `node:test` and `c8`:
+
+- package build, typecheck, and coverage on Node.js 20 and 22
+- coverage with `c8`, enforced at 100% for statements, branches, functions, and lines
+- sticky PR comments for coverage, test performance, and cognitive complexity
+- cognitive complexity enforcement with SonarJS threshold `15`
+- package tarball validation and README link validation
+- supply-chain audit for high-severity issues
+
+Run the local gate with:
+
+```bash
+npm run ci
+```
+
+## Status and Roadmap
+
+This is the bootstrap milestone. The planned path:
+
+1. **Bootstrap** — repo skeleton, empty package, CI green (this milestone).
+2. Spec generator skeleton: walks NestJS metadata, emits an empty valid 3.0 doc.
+3. `@AsyncApiChannel` + `@AsyncApiPub` / `@AsyncApiSub` with a showcase sample.
+4. DTO ↔ JSON Schema integration, validated against `@asyncapi/parser`.
+5. Transport bindings for Kafka, NATS, MQTT, AMQP.
+6. Docs route with the AsyncAPI viewer.
+7. Migration guide from `nestjs-asyncapi`.
+8. Documentation site. Release `v0.1`.
+
+See [CHANGELOG.md](CHANGELOG.md) for what has landed.
+
+## License
+
+[MIT](LICENSE) © 2026 Rodrigo Nogueira.
+
+Part of the [nest-native](https://github.com/nest-native) family, alongside
+[@nest-native/drizzle](https://github.com/nest-native/drizzle) and
+[@nest-native/trpc](https://github.com/nest-native/trpc).
