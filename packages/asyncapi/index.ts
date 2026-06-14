@@ -1,4 +1,5 @@
 export * from './asyncapi.module';
+export * from './bindings';
 export * from './constants';
 export * from './decorators';
 export * from './document';

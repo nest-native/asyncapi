@@ -1,16 +1,26 @@
 import { INestApplicationContext, Type } from '@nestjs/common';
 import { MetadataScanner, ModulesContainer } from '@nestjs/core';
 import {
+  AsyncApiChannelBindingsMap,
+  AsyncApiMessageBindingsMap,
+  AsyncApiOperationBindingsMap,
+} from './bindings';
+import {
+  ASYNC_API_CHANNEL_BINDINGS_METADATA,
   ASYNC_API_CHANNEL_METADATA,
   ASYNC_API_HEADERS_METADATA,
+  ASYNC_API_MESSAGE_BINDINGS_METADATA,
   ASYNC_API_MESSAGE_METADATA,
+  ASYNC_API_OPERATION_BINDINGS_METADATA,
   ASYNC_API_OPERATION_METADATA,
+  ASYNC_API_SERVERS_METADATA,
 } from './constants';
 import {
   AsyncApiChannelMetadata,
   AsyncApiHeadersMetadata,
   AsyncApiMessageMetadata,
   AsyncApiOperationMetadata,
+  AsyncApiServerMetadata,
 } from './decorators';
 import {
   ASYNC_API_VERSION,
@@ -19,6 +29,7 @@ import {
   AsyncApiInfo,
   AsyncApiMessageObject,
   AsyncApiOperationObject,
+  AsyncApiServerObject,
 } from './document';
 import { AsyncApiDocumentConfig } from './interfaces';
 import { AsyncApiDocumentScanner, ScannedHandler } from './scanner';
@@ -119,6 +130,57 @@ function readHeadersMetadata(
 }
 
 /**
+ * Read the channel bindings an {@link AsyncApiChannelBindings} decorator left on
+ * a handler class, or `undefined` when the channel declares none.
+ */
+function readChannelBindings(
+  metatype: Type,
+): AsyncApiChannelBindingsMap | undefined {
+  return Reflect.getMetadata(ASYNC_API_CHANNEL_BINDINGS_METADATA, metatype) as
+    | AsyncApiChannelBindingsMap
+    | undefined;
+}
+
+/**
+ * Read the operation bindings an {@link AsyncApiOperationBindings} decorator left
+ * on a prototype method, or `undefined` when the operation declares none.
+ */
+function readOperationBindings(
+  method: unknown,
+): AsyncApiOperationBindingsMap | undefined {
+  return Reflect.getMetadata(
+    ASYNC_API_OPERATION_BINDINGS_METADATA,
+    method as object,
+  ) as AsyncApiOperationBindingsMap | undefined;
+}
+
+/**
+ * Read the message bindings an {@link AsyncApiMessageBindings} decorator left on
+ * a prototype method, or `undefined` when the message declares none.
+ */
+function readMessageBindings(
+  method: unknown,
+): AsyncApiMessageBindingsMap | undefined {
+  return Reflect.getMetadata(
+    ASYNC_API_MESSAGE_BINDINGS_METADATA,
+    method as object,
+  ) as AsyncApiMessageBindingsMap | undefined;
+}
+
+/**
+ * Read the list of {@link AsyncApiServerMetadata} the (repeatable)
+ * {@link AsyncApiServer} decorator left on a handler class, or `undefined` when
+ * the class declares no servers.
+ */
+function readServerMetadata(
+  metatype: Type,
+): AsyncApiServerMetadata[] | undefined {
+  return Reflect.getMetadata(ASYNC_API_SERVERS_METADATA, metatype) as
+    | AsyncApiServerMetadata[]
+    | undefined;
+}
+
+/**
  * Derive the name a schema source contributes. A DTO class exposes its class
  * name through `Function.prototype.name`; a {@link JsonSchemaSource} exposes the
  * `name` it was created with. Both live on `.name`, so the same access works for
@@ -206,12 +268,45 @@ function buildMessage(
 }
 
 /**
+ * Build a Server Object from one {@link AsyncApiServer} declaration, copying the
+ * required `host`/`protocol` and only the optional fields that were provided.
+ */
+function buildServer(metadata: AsyncApiServerMetadata): AsyncApiServerObject {
+  const server: AsyncApiServerObject = {
+    host: metadata.host,
+    protocol: metadata.protocol,
+  };
+
+  if (metadata.protocolVersion !== undefined) {
+    server.protocolVersion = metadata.protocolVersion;
+  }
+  if (metadata.pathname !== undefined) {
+    server.pathname = metadata.pathname;
+  }
+  if (metadata.title !== undefined) {
+    server.title = metadata.title;
+  }
+  if (metadata.summary !== undefined) {
+    server.summary = metadata.summary;
+  }
+  if (metadata.description !== undefined) {
+    server.description = metadata.description;
+  }
+  if (metadata.bindings !== undefined) {
+    server.bindings = metadata.bindings;
+  }
+
+  return server;
+}
+
+/**
  * The mutable document body that {@link collectHandler} appends channels,
  * operations, and reusable messages to as it visits each decorated handler. The
  * {@link AsyncApiSchemaRegistry} accumulates `components.schemas` and dedupes
  * shared DTOs across messages.
  */
 interface DocumentBody {
+  servers: Record<string, AsyncApiServerObject>;
   channels: Record<string, AsyncApiChannelObject>;
   operations: Record<string, AsyncApiOperationObject>;
   messages: Record<string, AsyncApiMessageObject>;
@@ -251,6 +346,11 @@ function collectMessage(
   const headersMeta = readHeadersMetadata(context.method);
   if (headersMeta !== undefined) {
     message.headers = { $ref: body.registry.register(headersMeta.headers) };
+  }
+
+  const messageBindings = readMessageBindings(context.method);
+  if (messageBindings !== undefined) {
+    message.bindings = messageBindings;
   }
 
   registerMessage(body, context, messageName, message);
@@ -309,6 +409,11 @@ function collectOperation(body: DocumentBody, context: OperationContext): void {
     operation.messages = [{ $ref: messageRef }];
   }
 
+  const operationBindings = readOperationBindings(context.method);
+  if (operationBindings !== undefined) {
+    operation.bindings = operationBindings;
+  }
+
   body.operations[operationId] = operation;
 }
 
@@ -338,6 +443,8 @@ function collectOperations(
  * channel id is treated as a build failure.
  */
 function collectHandler(body: DocumentBody, handler: ScannedHandler): void {
+  collectServers(body, handler);
+
   const channelMeta = readChannelMetadata(handler.metatype);
   if (channelMeta === undefined) {
     return;
@@ -349,8 +456,43 @@ function collectHandler(body: DocumentBody, handler: ScannedHandler): void {
     );
   }
 
-  body.channels[channelMeta.id] = buildChannel(channelMeta);
+  const channel = buildChannel(channelMeta);
+  const channelBindings = readChannelBindings(handler.metatype);
+  if (channelBindings !== undefined) {
+    channel.bindings = channelBindings;
+  }
+
+  body.channels[channelMeta.id] = channel;
   collectOperations(body, handler, channelMeta.id);
+}
+
+/**
+ * Register every {@link AsyncApiServer} declared on a handler class. The
+ * decorator is repeatable, so a class can carry several declarations; a server
+ * name reused for a structurally different server is a build failure so a
+ * collision never silently overwrites a definition.
+ */
+function collectServers(body: DocumentBody, handler: ScannedHandler): void {
+  const serversMeta = readServerMetadata(handler.metatype);
+  if (serversMeta === undefined) {
+    return;
+  }
+
+  for (const serverMeta of serversMeta) {
+    const server = buildServer(serverMeta);
+    const existing = body.servers[serverMeta.name];
+
+    if (
+      existing !== undefined &&
+      JSON.stringify(existing) !== JSON.stringify(server)
+    ) {
+      throw new Error(
+        `Conflicting AsyncAPI server named "${serverMeta.name}" produced by ${handler.metatype.name}.`,
+      );
+    }
+
+    body.servers[serverMeta.name] = server;
+  }
 }
 
 /**
@@ -368,6 +510,7 @@ export function buildAsyncApiDocument(
   handlers: ScannedHandler[],
 ): AsyncApiDocument {
   const body: DocumentBody = {
+    servers: {},
     channels: {},
     operations: {},
     messages: {},
@@ -378,13 +521,19 @@ export function buildAsyncApiDocument(
     collectHandler(body, handler);
   }
 
-  return {
+  const document: AsyncApiDocument = {
     asyncapi: ASYNC_API_VERSION,
     info: buildInfo(config),
     channels: body.channels,
     operations: body.operations,
     components: buildComponents(body),
   };
+
+  if (Object.keys(body.servers).length > 0) {
+    document.servers = body.servers;
+  }
+
+  return document;
 }
 
 /**

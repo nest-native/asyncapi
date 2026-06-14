@@ -10,6 +10,13 @@
  * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0
  */
 
+import {
+  AsyncApiChannelBindingsMap,
+  AsyncApiMessageBindingsMap,
+  AsyncApiOperationBindingsMap,
+  AsyncApiServerBindingsMap,
+} from './bindings';
+
 /**
  * The fixed AsyncAPI specification version this generator targets.
  */
@@ -112,6 +119,36 @@ export interface AsyncApiMessageObject {
   payload?: AsyncApiSchemaObject;
   /** A schema (or `$ref`) describing the message headers. */
   headers?: AsyncApiSchemaObject;
+  /** Protocol-specific bindings for the message, keyed by protocol. */
+  bindings?: AsyncApiMessageBindingsMap;
+}
+
+/**
+ * An AsyncAPI 3.0 Server Object — a message broker the application connects to.
+ *
+ * `host` and `protocol` are the only required fields per the specification. The
+ * server's `bindings` carry protocol-specific connection metadata (schema
+ * registry URLs, MQTT client ids, …) that the core fields cannot express.
+ *
+ * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0#serverObject
+ */
+export interface AsyncApiServerObject {
+  /** The server host name. It MAY include the port. */
+  host: string;
+  /** The protocol this server supports for connection (e.g. `kafka`). */
+  protocol: string;
+  /** The version of the protocol used for connection. */
+  protocolVersion?: string;
+  /** The path to a resource in the host. */
+  pathname?: string;
+  /** A human-friendly title for the server. */
+  title?: string;
+  /** A brief summary of the server. */
+  summary?: string;
+  /** A longer description of the server. */
+  description?: string;
+  /** Protocol-specific bindings for the server, keyed by protocol. */
+  bindings?: AsyncApiServerBindingsMap;
 }
 
 /**
@@ -142,6 +179,13 @@ export interface AsyncApiChannelObject {
    * 3.0 prescribes.
    */
   messages?: Record<string, AsyncApiReference>;
+  /**
+   * The servers this channel is available on, each a `#/servers/<name>`
+   * reference. When omitted the channel is available on every declared server.
+   */
+  servers?: AsyncApiReference[];
+  /** Protocol-specific bindings for the channel, keyed by protocol. */
+  bindings?: AsyncApiChannelBindingsMap;
 }
 
 /**
@@ -181,6 +225,8 @@ export interface AsyncApiOperationObject {
    * the operation's messages a subset of its channel's messages.
    */
   messages?: AsyncApiReference[];
+  /** Protocol-specific bindings for the operation, keyed by protocol. */
+  bindings?: AsyncApiOperationBindingsMap;
 }
 
 /**
@@ -215,6 +261,12 @@ export interface AsyncApiDocument {
   asyncapi: typeof ASYNC_API_VERSION;
   /** Metadata about the API. */
   info: AsyncApiInfo;
+  /**
+   * The brokers the application connects to, keyed by server name. Emitted only
+   * when at least one {@link AsyncApiServer} is declared, since `servers` is
+   * optional in AsyncAPI 3.0.
+   */
+  servers?: Record<string, AsyncApiServerObject>;
   /** Addresses where messages are exchanged, keyed by channel id. */
   channels: Record<string, AsyncApiChannelObject>;
   /** Send/receive actions over the declared channels, keyed by operation id. */
