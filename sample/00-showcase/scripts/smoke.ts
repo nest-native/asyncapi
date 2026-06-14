@@ -29,6 +29,7 @@ async function smoke(): Promise<void> {
     assertOrdersChannel(document);
     assertShipmentsChannel(document);
     assertComponents(document);
+    assertTransportBindings(document);
     await assertValidatesWithParser(document);
   } finally {
     await app.close();
@@ -86,6 +87,26 @@ function assertComponents(document: ShowcaseDocument): void {
     '#/components/schemas/OrderShipped',
   );
   assert.ok(schemas.OrderShipped, 'Zod-derived payload schema is present');
+}
+
+function assertTransportBindings(document: ShowcaseDocument): void {
+  // Kafka: a server, the channel topic, and the consumer group.
+  const servers = document.servers ?? {};
+  assert.equal(servers.kafka?.protocol, 'kafka');
+  assert.equal(servers.nats?.protocol, 'nats');
+  assert.equal(
+    document.channels.orders.bindings?.kafka?.topic,
+    'orders.v1',
+  );
+  assert.ok(
+    document.operations.onOrderPlaced.bindings?.kafka?.groupId,
+    'the orders consumer group is documented',
+  );
+  // NATS: the queue group on the shipments subscriber.
+  assert.equal(
+    document.operations.onOrderShipped.bindings?.nats?.queue,
+    'shipments-workers',
+  );
 }
 
 async function assertValidatesWithParser(
