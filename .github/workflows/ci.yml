@@ -262,5 +262,6 @@ jobs:
           | `02-validation-zod` | `@AsyncApiMessage` with a Zod payload via `zod-to-json-schema` | Boots the app and validates the document with `@asyncapi/parser` |
           | `03-transport-bindings` | `@AsyncApiServer` and Kafka, NATS, MQTT, and AMQP bindings across servers, channels, operations, and messages | Boots the app and validates the document with `@asyncapi/parser` |
           | `04-docs-route` | `AsyncApiModule.setup` serving the viewer page and the JSON/YAML spec routes | Boots the app over HTTP and validates the served JSON and YAML with `@asyncapi/parser` |
+          | `05-migration-nestjs-asyncapi` | The `nestjs-asyncapi` 2.x felines sample ported to AsyncAPI 3.0: channel/operation split, `@EventPattern` coexistence, slash channel ids, and polymorphic payloads | Boots the app, asserts the migration is faithful, and validates the document with `@asyncapi/parser` |
           EOF
           sed -i "s/DURATION_PLACEHOLDER/${DURATION_SECONDS}s (${DURATION_MS}ms)/" "$GITHUB_STEP_SUMMARY"

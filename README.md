@@ -151,6 +151,18 @@ const document = getAsyncApiDocument(app, {
 // => { asyncapi: '3.0.0', info: { title, version }, channels: {}, operations: {}, components: {} }
 ```
 
+## Migrating from `nestjs-asyncapi`
+
+If you are moving off the abandoned 2.x
+[`nestjs-asyncapi`](https://github.com/flamewow/nestjs-asyncapi), the
+[migration guide](docs/migration-from-nestjs-asyncapi.md) maps every 2.x
+decorator and the `AsyncApiDocumentBuilder` flow onto this package's AsyncAPI 3.0
+model. It is validated end-to-end by porting the `nestjs-asyncapi` "felines"
+sample app in
+[`sample/05-migration-nestjs-asyncapi`](sample/05-migration-nestjs-asyncapi),
+whose smoke test asserts the migration is faithful and validates the result with
+the official `@asyncapi/parser`.
+
 ## Quality Gates
 
 The repository ships the same review posture as its sibling `@nest-native`

@@ -281,6 +281,14 @@ AsyncApiModule.setup('async-docs', app, document, {
 > routes behind your application's existing auth (a guard or a reverse proxy) when
 > the document is sensitive, and never place secrets in example payloads.
 
+## Migrating from `nestjs-asyncapi`
+
+Coming from the abandoned 2.x [`nestjs-asyncapi`](https://github.com/flamewow/nestjs-asyncapi)?
+The [migration guide](https://github.com/nest-native/asyncapi/blob/main/docs/migration-from-nestjs-asyncapi.md)
+maps every 2.x decorator and the `AsyncApiDocumentBuilder` flow onto this
+package's 3.0 model, and is validated by porting the `nestjs-asyncapi` sample app
+in [`sample/05-migration-nestjs-asyncapi`](https://github.com/nest-native/asyncapi/tree/main/sample/05-migration-nestjs-asyncapi).
+
 ## Links
 
 - Source and issues: [github.com/nest-native/asyncapi](https://github.com/nest-native/asyncapi)

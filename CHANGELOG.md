@@ -10,6 +10,23 @@ package release is useful for users.
 
 ### Added
 
+- Migration guide from `nestjs-asyncapi`
+  (`docs/migration-from-nestjs-asyncapi.md`), mapping every 2.x decorator and the
+  `AsyncApiDocumentBuilder` flow onto the AsyncAPI 3.0 model. Validated by
+  `sample/05-migration-nestjs-asyncapi`, which ports the `nestjs-asyncapi`
+  "felines" sample app and validates the result with `@asyncapi/parser`.
+- `escapeJsonPointerSegment` and `buildRef` reference helpers (RFC 6901) are
+  exported for advanced use.
+
+### Fixed
+
+- Generated `$ref`s now JSON-Pointer-escape each segment (`/` → `~1`, `~` → `~0`),
+  so channel ids containing `/` — common when channels mirror
+  `@nestjs/microservices` `@EventPattern` strings such as `ms/create/feline` —
+  produce references that resolve and pass `@asyncapi/parser` validation.
+
+### Added
+
 - Spec-generator skeleton. `getAsyncApiDocument(app, config)` — the AsyncAPI
   counterpart to `SwaggerModule.createDocument` — walks the running
   application's NestJS metadata (the same `ModulesContainer` and
