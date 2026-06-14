@@ -1,4 +1,5 @@
 import { ModuleMetadata, Provider } from '@nestjs/common';
+import { AsyncApiContact, AsyncApiLicense } from './document';
 
 /**
  * Configuration for {@link AsyncApiModule.forRoot}.
@@ -52,4 +53,50 @@ export interface AsyncApiModuleAsyncOptions
   useFactory: (
     ...args: any[]
   ) => AsyncApiModuleOptions | Promise<AsyncApiModuleOptions>;
+}
+
+/**
+ * Configuration passed to {@link getAsyncApiDocument} to seed the generated
+ * AsyncAPI 3.0 document's `info` object.
+ *
+ * This is the AsyncAPI counterpart to `DocumentBuilder` in `@nestjs/swagger`:
+ * it carries the document-level metadata that cannot be derived from decorated
+ * handlers. Channels, operations, and components are discovered from NestJS
+ * metadata by the generator and are not configured here.
+ */
+export interface AsyncApiDocumentConfig {
+  /**
+   * The title of the application.
+   *
+   * @default 'AsyncAPI'
+   */
+  title?: string;
+
+  /**
+   * The version of the generated document. This is the API/document version and
+   * is distinct from the AsyncAPI specification version (always `3.0.0`).
+   *
+   * @default '1.0.0'
+   */
+  version?: string;
+
+  /**
+   * A short description of the application.
+   */
+  description?: string;
+
+  /**
+   * A URL to the Terms of Service for the API.
+   */
+  termsOfService?: string;
+
+  /**
+   * Contact information for the exposed API.
+   */
+  contact?: AsyncApiContact;
+
+  /**
+   * License information for the exposed API.
+   */
+  license?: AsyncApiLicense;
 }

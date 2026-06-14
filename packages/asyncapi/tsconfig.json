@@ -8,8 +8,11 @@
   },
   "include": [
     "asyncapi.module.ts",
+    "document.ts",
+    "generator.ts",
     "index.ts",
-    "interfaces.ts"
+    "interfaces.ts",
+    "scanner.ts"
   ],
   "exclude": ["dist", "node_modules", "test/**/*", "*.spec.ts"]
 }
