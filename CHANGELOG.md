@@ -6,36 +6,69 @@ This project follows semantic versioning for the published package. Sample,
 documentation, and CI-only changes may remain in `Unreleased` until the next
 package release is useful for users.
 
-## Unreleased
+## 0.1.0 - 2026-06-14
+
+First public release of `@nest-native/asyncapi`. The package generates AsyncAPI
+3.0 documentation from decorated NestJS handlers, mirroring `@nestjs/swagger` for
+the event and message side, and ships a docs route with the AsyncAPI viewer.
 
 ### Added
 
+- Documentation site built with Docusaurus under `website/`, covering getting
+  started, the five decorators, document generation, the docs route, transport
+  bindings, the public API reference, validation (class-validator and Zod), the
+  `nestjs-asyncapi` migration, the sample catalog, and project reference pages
+  (support policy, quality and CI, security, release, contributing, roadmap). A
+  `docs-site` CI job builds the site (`onBrokenLinks: throw`), a
+  `deploy-docs.yml` workflow publishes it to GitHub Pages, and `npm run ci` now
+  includes `ci:docs` plus a docs supply-chain audit.
+
+This release rolls up the v0.0.x development line:
+
+- `AsyncApiModule.forRoot()` / `forRootAsync()` for global configuration and
+  `AsyncApiModule.setup()` for serving the viewer.
+- The five decorators (`@AsyncApiChannel`, `@AsyncApiPub` / `@AsyncApiSub`,
+  `@AsyncApiMessage`, `@AsyncApiHeaders`, `@AsyncApiServer`) plus the binding
+  decorators (`@AsyncApiChannelBindings`, `@AsyncApiOperationBindings`,
+  `@AsyncApiMessageBindings`).
+- `getAsyncApiDocument()` metadata discovery, DTO and Zod schema generation
+  through the `@nestjs/swagger` chain, JSON/YAML serializers, RFC 6901 reference
+  helpers, and typed Kafka, NATS, MQTT, and AMQP bindings.
+- A migration guide from `nestjs-asyncapi`, validated by a ported sample app, and
+  a sample catalog whose every generated document passes `@asyncapi/parser`.
+
+Detailed entries from the development line, rolled into this release:
+
+- Spec-generator skeleton. `getAsyncApiDocument(app, config)` — the AsyncAPI
+  counterpart to `SwaggerModule.createDocument` — walks the running
+  application's NestJS metadata (the same `ModulesContainer` and
+  `MetadataScanner` `@nestjs/swagger` uses for controllers) and emits a valid
+  AsyncAPI 3.0 document.
+- The `@AsyncApiChannel`, `@AsyncApiPub` / `@AsyncApiSub`, `@AsyncApiMessage`,
+  `@AsyncApiHeaders`, and `@AsyncApiServer` decorators that populate channels,
+  operations, messages, and servers from handler metadata.
+- DTO ↔ JSON Schema integration through the `@nestjs/swagger` chain, with a Zod
+  path via `zod-to-json-schema`, and output validated against `@asyncapi/parser`.
+- Typed Kafka, NATS, MQTT, and AMQP transport bindings at the server, channel,
+  operation, and message scopes, attached with `@AsyncApiChannelBindings`,
+  `@AsyncApiOperationBindings`, and `@AsyncApiMessageBindings`.
+- The docs route: `AsyncApiModule.setup()` serves the AsyncAPI viewer plus the
+  raw JSON and YAML over the application's existing HTTP server, adapter-agnostic
+  across Express and Fastify.
 - Migration guide from `nestjs-asyncapi`
   (`docs/migration-from-nestjs-asyncapi.md`), mapping every 2.x decorator and the
   `AsyncApiDocumentBuilder` flow onto the AsyncAPI 3.0 model. Validated by
   `sample/05-migration-nestjs-asyncapi`, which ports the `nestjs-asyncapi`
   "felines" sample app and validates the result with `@asyncapi/parser`.
-- `escapeJsonPointerSegment` and `buildRef` reference helpers (RFC 6901) are
-  exported for advanced use.
+- `escapeJsonPointerSegment` and `buildRef` reference helpers (RFC 6901),
+  exported for advanced use, so generated `$ref`s JSON-Pointer-escape each
+  segment (`/` → `~1`, `~` → `~0`) — channel ids containing `/`, common when
+  channels mirror `@EventPattern` strings such as `ms/create/feline`, resolve and
+  pass `@asyncapi/parser` validation.
 
-### Fixed
-
-- Generated `$ref`s now JSON-Pointer-escape each segment (`/` → `~1`, `~` → `~0`),
-  so channel ids containing `/` — common when channels mirror
-  `@nestjs/microservices` `@EventPattern` strings such as `ms/create/feline` —
-  produce references that resolve and pass `@asyncapi/parser` validation.
-
-### Added
-
-- Spec-generator skeleton. `getAsyncApiDocument(app, config)` — the AsyncAPI
-  counterpart to `SwaggerModule.createDocument` — walks the running
-  application's NestJS metadata (the same `ModulesContainer` and
-  `MetadataScanner` `@nestjs/swagger` uses for controllers) and emits an empty
-  but valid AsyncAPI 3.0 document.
-- `AsyncApiDocument` type model for the emitted document, an `AsyncApiDocumentConfig`
-  for document-level `info` metadata, and an `AsyncApiDocumentScanner` that
-  performs the metadata walk. Channels, operations, and components are emitted
-  empty until the decorator milestones populate them.
+The published package keeps `"dependencies": {}`. The NestJS packages are
+declared as `peerDependencies`, and the AsyncAPI parser, viewer, `@nestjs/swagger`,
+and validation libraries are optional peers.
 
 ## 0.0.0 - 2026-06-13
 
