@@ -1,0 +1,26 @@
+{
+  "name": "nest-native-asyncapi-showcase",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sample 00 - Nest-native AsyncAPI showcase",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "smoke": "ts-node --transpile-only scripts/smoke.ts",
+    "test": "npm run typecheck && npm run smoke",
+    "start": "ts-node --transpile-only src/main.ts"
+  },
+  "dependencies": {
+    "@nest-native/asyncapi": "0.0.0",
+    "@nestjs/common": "11.1.26",
+    "@nestjs/core": "11.1.26",
+    "@nestjs/platform-express": "11.1.26",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.0",
+    "ts-node": "10.9.2",
+    "typescript": "6.0.3"
+  }
+}
