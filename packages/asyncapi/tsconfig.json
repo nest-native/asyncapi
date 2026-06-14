@@ -8,6 +8,8 @@
   },
   "include": [
     "asyncapi.module.ts",
+    "constants.ts",
+    "decorators.ts",
     "document.ts",
     "generator.ts",
     "index.ts",

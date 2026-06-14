@@ -59,6 +59,62 @@ export interface AsyncApiInfo {
 }
 
 /**
+ * An AsyncAPI 3.0 Channel Object.
+ *
+ * A channel is an addressable component where messages flow. The 3.0
+ * specification decouples channels (the "where") from operations (the
+ * "send/receive" actions), so a channel never declares a direction itself.
+ *
+ * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0#channelObject
+ */
+export interface AsyncApiChannelObject {
+  /**
+   * The channel address (for example a topic, queue, or routing key). `null`
+   * marks an address that is unknown at design time, per the specification.
+   */
+  address?: string | null;
+  /** A human-friendly title for the channel. */
+  title?: string;
+  /** A short summary of the channel. */
+  summary?: string;
+  /** A verbose explanation of the channel. */
+  description?: string;
+}
+
+/**
+ * A reference to an AsyncAPI Operation's target channel, expressed as a JSON
+ * Reference into the document's `channels` section.
+ *
+ * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0#referenceObject
+ */
+export interface AsyncApiChannelReference {
+  /** A `#/channels/<id>` JSON pointer to the operation's channel. */
+  $ref: string;
+}
+
+/**
+ * An AsyncAPI 3.0 Operation Object.
+ *
+ * Operations declare what an application does with a channel: `send` to
+ * produce messages, `receive` to consume them. The operation points at its
+ * channel through a reference rather than nesting under it.
+ *
+ * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0#operationObject
+ */
+export interface AsyncApiOperationObject {
+  /** Whether the application sends or receives messages on the channel. */
+  action: 'send' | 'receive';
+  /** A reference to the channel this operation acts upon. */
+  channel: AsyncApiChannelReference;
+  /** A human-friendly title for the operation. */
+  title?: string;
+  /** A short summary of the operation. */
+  summary?: string;
+  /** A verbose explanation of the operation. */
+  description?: string;
+}
+
+/**
  * The reusable definitions container of an AsyncAPI 3.0 document. Sub-sections
  * are added as later milestones introduce messages, schemas, and bindings.
  */
@@ -79,10 +135,10 @@ export interface AsyncApiDocument {
   asyncapi: typeof ASYNC_API_VERSION;
   /** Metadata about the API. */
   info: AsyncApiInfo;
-  /** Addresses where messages are exchanged. Empty until channels are declared. */
-  channels: Record<string, unknown>;
-  /** Send/receive actions over the declared channels. Empty until declared. */
-  operations: Record<string, unknown>;
+  /** Addresses where messages are exchanged, keyed by channel id. */
+  channels: Record<string, AsyncApiChannelObject>;
+  /** Send/receive actions over the declared channels, keyed by operation id. */
+  operations: Record<string, AsyncApiOperationObject>;
   /** Reusable definitions referenced from the rest of the document. */
   components: AsyncApiComponents;
 }
