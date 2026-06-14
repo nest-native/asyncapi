@@ -257,8 +257,9 @@ jobs:
 
           | Sample | Demonstrates | CI behavior |
           | :--- | :--- | :--- |
-          | `00-showcase` | All decorators with class-validator and Zod payloads, validated by `@asyncapi/parser` | Boots the app and asserts the generated AsyncAPI 3.0 document |
+          | `00-showcase` | All decorators with class-validator and Zod payloads plus Kafka and NATS bindings, validated by `@asyncapi/parser` | Boots the app and asserts the generated AsyncAPI 3.0 document |
           | `01-validation-class-validator` | `@AsyncApiMessage` / `@AsyncApiHeaders` with class-validator DTOs | Boots the app and validates the document with `@asyncapi/parser` |
           | `02-validation-zod` | `@AsyncApiMessage` with a Zod payload via `zod-to-json-schema` | Boots the app and validates the document with `@asyncapi/parser` |
+          | `03-transport-bindings` | `@AsyncApiServer` and Kafka, NATS, MQTT, and AMQP bindings across servers, channels, operations, and messages | Boots the app and validates the document with `@asyncapi/parser` |
           EOF
           sed -i "s/DURATION_PLACEHOLDER/${DURATION_SECONDS}s (${DURATION_MS}ms)/" "$GITHUB_STEP_SUMMARY"

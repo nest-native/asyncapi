@@ -6,7 +6,9 @@ real event-driven application.
 
 This sample grows milestone by milestone. At this milestone it demonstrates the
 channel and operation decorators plus message payloads from both validation
-worlds, producing a valid AsyncAPI 3.0 document validated by `@asyncapi/parser`.
+worlds, and transport bindings (Kafka on the orders channel, NATS on the
+shipments channel), producing a valid AsyncAPI 3.0 document validated by
+`@asyncapi/parser`.
 
 ## What It Demonstrates
 
@@ -19,13 +21,17 @@ worlds, producing a valid AsyncAPI 3.0 document validated by `@asyncapi/parser`.
   `@nestjs/swagger` chain (the `orders` channel)
 - The Zod world: a Zod schema converted with `zod-to-json-schema` (the
   `shipments` channel)
+- `@AsyncApiServer(...)`, `@AsyncApiChannelBindings(...)`, and
+  `@AsyncApiOperationBindings(...)` declaring the Kafka and NATS brokers and the
+  channel/operation transport bindings
 - `getAsyncApiDocument(app, config)` walking NestJS metadata to assemble a
   spec-compliant AsyncAPI 3.0 document — the AsyncAPI counterpart to
   `SwaggerModule.createDocument`
 - The generated document passing official `@asyncapi/parser` validation
 
-Transport bindings and the hosted docs route with a live viewer land in later
-milestones and will be folded into this same showcase.
+The hosted docs route with a live viewer lands in a later milestone and will be
+folded into this same showcase. Sample `03-transport-bindings` covers all four
+v1 transports (Kafka, NATS, MQTT, AMQP) across every binding scope.
 
 ## Commands
 

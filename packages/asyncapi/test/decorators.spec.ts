@@ -2,23 +2,37 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import 'reflect-metadata';
 import {
+  ASYNC_API_CHANNEL_BINDINGS_METADATA,
   ASYNC_API_CHANNEL_METADATA,
   ASYNC_API_HEADERS_METADATA,
+  ASYNC_API_MESSAGE_BINDINGS_METADATA,
   ASYNC_API_MESSAGE_METADATA,
+  ASYNC_API_OPERATION_BINDINGS_METADATA,
   ASYNC_API_OPERATION_METADATA,
+  ASYNC_API_SERVERS_METADATA,
   AsyncApiAction,
 } from '../constants';
 import {
   AsyncApiChannel,
+  AsyncApiChannelBindings,
   AsyncApiChannelMetadata,
   AsyncApiHeaders,
   AsyncApiHeadersMetadata,
   AsyncApiMessage,
+  AsyncApiMessageBindings,
   AsyncApiMessageMetadata,
+  AsyncApiOperationBindings,
   AsyncApiOperationMetadata,
   AsyncApiPub,
+  AsyncApiServer,
+  AsyncApiServerMetadata,
   AsyncApiSub,
 } from '../decorators';
+import {
+  AsyncApiChannelBindingsMap,
+  AsyncApiMessageBindingsMap,
+  AsyncApiOperationBindingsMap,
+} from '../bindings';
 
 function readChannel(target: object): AsyncApiChannelMetadata | undefined {
   return Reflect.getMetadata(ASYNC_API_CHANNEL_METADATA, target) as
@@ -43,6 +57,38 @@ function readMessage(method: unknown): AsyncApiMessageMetadata | undefined {
 function readHeaders(method: unknown): AsyncApiHeadersMetadata | undefined {
   return Reflect.getMetadata(ASYNC_API_HEADERS_METADATA, method as object) as
     | AsyncApiHeadersMetadata
+    | undefined;
+}
+
+function readChannelBindings(
+  target: object,
+): AsyncApiChannelBindingsMap | undefined {
+  return Reflect.getMetadata(ASYNC_API_CHANNEL_BINDINGS_METADATA, target) as
+    | AsyncApiChannelBindingsMap
+    | undefined;
+}
+
+function readOperationBindings(
+  method: unknown,
+): AsyncApiOperationBindingsMap | undefined {
+  return Reflect.getMetadata(
+    ASYNC_API_OPERATION_BINDINGS_METADATA,
+    method as object,
+  ) as AsyncApiOperationBindingsMap | undefined;
+}
+
+function readMessageBindings(
+  method: unknown,
+): AsyncApiMessageBindingsMap | undefined {
+  return Reflect.getMetadata(
+    ASYNC_API_MESSAGE_BINDINGS_METADATA,
+    method as object,
+  ) as AsyncApiMessageBindingsMap | undefined;
+}
+
+function readServers(target: object): AsyncApiServerMetadata[] | undefined {
+  return Reflect.getMetadata(ASYNC_API_SERVERS_METADATA, target) as
+    | AsyncApiServerMetadata[]
     | undefined;
 }
 
@@ -197,5 +243,100 @@ describe('AsyncApiHeaders', () => {
     assert.deepEqual(readHeaders(Handler.prototype.placeOrder), {
       headers: HeadersDto,
     });
+  });
+});
+
+describe('AsyncApiServer', () => {
+  it('stores the required fields and all supplied options', () => {
+    @AsyncApiServer('production', 'broker.example.com:9092', 'kafka', {
+      protocolVersion: '3.5',
+      pathname: '/events',
+      title: 'Production Kafka',
+      summary: 'Primary broker',
+      description: 'The production Kafka cluster',
+      bindings: { kafka: { schemaRegistryVendor: 'confluent' } },
+    })
+    class Handler {}
+
+    assert.deepEqual(readServers(Handler), [
+      {
+        name: 'production',
+        host: 'broker.example.com:9092',
+        protocol: 'kafka',
+        protocolVersion: '3.5',
+        pathname: '/events',
+        title: 'Production Kafka',
+        summary: 'Primary broker',
+        description: 'The production Kafka cluster',
+        bindings: { kafka: { schemaRegistryVendor: 'confluent' } },
+      },
+    ]);
+  });
+
+  it('stores only the required fields when no options are supplied', () => {
+    @AsyncApiServer('local', 'localhost:1883', 'mqtt')
+    class Handler {}
+
+    assert.deepEqual(readServers(Handler), [
+      { name: 'local', host: 'localhost:1883', protocol: 'mqtt' },
+    ]);
+  });
+
+  it('accumulates several server declarations on one class', () => {
+    @AsyncApiServer('kafka', 'broker:9092', 'kafka')
+    @AsyncApiServer('nats', 'nats://localhost:4222', 'nats')
+    class Handler {}
+
+    const servers = readServers(Handler);
+    assert.equal(servers?.length, 2);
+    assert.deepEqual(
+      servers?.map((server) => server.name).sort(),
+      ['kafka', 'nats'],
+    );
+  });
+});
+
+describe('AsyncApiChannelBindings', () => {
+  it('stores the protocol-keyed channel bindings', () => {
+    const bindings: AsyncApiChannelBindingsMap = {
+      kafka: { topic: 'orders', partitions: 3, bindingVersion: '0.5.0' },
+    };
+
+    @AsyncApiChannelBindings(bindings)
+    class Handler {}
+
+    assert.deepEqual(readChannelBindings(Handler), bindings);
+  });
+});
+
+describe('AsyncApiOperationBindings', () => {
+  it('stores the protocol-keyed operation bindings', () => {
+    const bindings: AsyncApiOperationBindingsMap = {
+      kafka: { groupId: { type: 'string' }, bindingVersion: '0.5.0' },
+      nats: { queue: 'workers', bindingVersion: '0.1.0' },
+    };
+
+    class Handler {
+      @AsyncApiOperationBindings(bindings)
+      onMessage(): void {}
+    }
+
+    assert.deepEqual(readOperationBindings(Handler.prototype.onMessage), bindings);
+  });
+});
+
+describe('AsyncApiMessageBindings', () => {
+  it('stores the protocol-keyed message bindings', () => {
+    const bindings: AsyncApiMessageBindingsMap = {
+      kafka: { schemaIdLocation: 'payload', bindingVersion: '0.5.0' },
+      amqp: { contentEncoding: 'gzip', bindingVersion: '0.3.0' },
+    };
+
+    class Handler {
+      @AsyncApiMessageBindings(bindings)
+      onMessage(): void {}
+    }
+
+    assert.deepEqual(readMessageBindings(Handler.prototype.onMessage), bindings);
   });
 });

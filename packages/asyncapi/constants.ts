@@ -32,6 +32,34 @@ export const ASYNC_API_MESSAGE_METADATA = 'asyncapi:message';
 export const ASYNC_API_HEADERS_METADATA = 'asyncapi:headers';
 
 /**
+ * Class-level metadata key holding the protocol bindings written by
+ * {@link AsyncApiChannelBindings}. Attached to the channel handler class because
+ * channel bindings describe the channel the class declares.
+ */
+export const ASYNC_API_CHANNEL_BINDINGS_METADATA = 'asyncapi:channel-bindings';
+
+/**
+ * Method-level metadata key holding the protocol bindings written by
+ * {@link AsyncApiOperationBindings}.
+ */
+export const ASYNC_API_OPERATION_BINDINGS_METADATA =
+  'asyncapi:operation-bindings';
+
+/**
+ * Method-level metadata key holding the protocol bindings written by
+ * {@link AsyncApiMessageBindings}. Attached alongside {@link AsyncApiMessage}
+ * because message bindings describe the message that operation carries.
+ */
+export const ASYNC_API_MESSAGE_BINDINGS_METADATA = 'asyncapi:message-bindings';
+
+/**
+ * Class-level metadata key holding the list of {@link AsyncApiServerMetadata}
+ * written by {@link AsyncApiServer}. The decorator is repeatable, so the value
+ * is an array accumulated across every application.
+ */
+export const ASYNC_API_SERVERS_METADATA = 'asyncapi:servers';
+
+/**
  * AsyncAPI 3.0 operation actions.
  *
  * In AsyncAPI 3.0 an operation declares its direction with `action`: an

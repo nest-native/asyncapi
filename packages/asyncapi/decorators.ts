@@ -1,8 +1,18 @@
 import {
+  AsyncApiChannelBindingsMap,
+  AsyncApiMessageBindingsMap,
+  AsyncApiOperationBindingsMap,
+  AsyncApiServerBindingsMap,
+} from './bindings';
+import {
+  ASYNC_API_CHANNEL_BINDINGS_METADATA,
   ASYNC_API_CHANNEL_METADATA,
   ASYNC_API_HEADERS_METADATA,
+  ASYNC_API_MESSAGE_BINDINGS_METADATA,
   ASYNC_API_MESSAGE_METADATA,
+  ASYNC_API_OPERATION_BINDINGS_METADATA,
   ASYNC_API_OPERATION_METADATA,
+  ASYNC_API_SERVERS_METADATA,
   AsyncApiAction,
   AsyncApiActionType,
 } from './constants';
@@ -223,6 +233,145 @@ export function AsyncApiHeaders(headers: SchemaSource): MethodDecorator {
     Reflect.defineMetadata(
       ASYNC_API_HEADERS_METADATA,
       metadata,
+      descriptor.value as object,
+    );
+    return descriptor;
+  };
+}
+
+/**
+ * Options accepted by {@link AsyncApiServer}.
+ *
+ * These map onto the AsyncAPI 3.0 Server Object. A server declares a broker the
+ * application connects to; its `protocol` (`kafka`, `nats`, `mqtt`, `amqp`, …)
+ * and optional protocol `bindings` carry the transport identity and connection
+ * metadata that the channels and operations are bound to.
+ */
+export interface AsyncApiServerOptions {
+  /** The protocol version used for connection. */
+  protocolVersion?: string;
+  /** The path to a resource in the host. */
+  pathname?: string;
+  /** A human-friendly title for the server. */
+  title?: string;
+  /** A brief summary of the server. */
+  summary?: string;
+  /** A longer description of the server. */
+  description?: string;
+  /** Protocol-specific connection bindings, keyed by protocol. */
+  bindings?: AsyncApiServerBindingsMap;
+}
+
+/**
+ * The class-level metadata written by one {@link AsyncApiServer} application.
+ */
+export interface AsyncApiServerMetadata extends AsyncApiServerOptions {
+  /** The server name, used as the key in the generated `servers` map. */
+  name: string;
+  /** The server host name. It MAY include the port. */
+  host: string;
+  /** The protocol this server supports for connection. */
+  protocol: string;
+}
+
+/**
+ * Declare a server (message broker) the application connects to.
+ *
+ * Apply at class level. The decorator is repeatable — stacking it declares
+ * several brokers — and every declaration across the application is merged into
+ * the document's `servers` map. The `protocol` and the optional protocol
+ * `bindings` are where a transport's identity and connection metadata live, so
+ * this is the AsyncAPI counterpart to documenting the base URL and security of
+ * an HTTP server.
+ *
+ * @param name     The server name, used as the `servers` map key.
+ * @param host     The server host (it MAY include the port).
+ * @param protocol The connection protocol (`kafka`, `nats`, `mqtt`, `amqp`, …).
+ * @param options  Server metadata (title, description, bindings, …).
+ */
+export function AsyncApiServer(
+  name: string,
+  host: string,
+  protocol: string,
+  options: AsyncApiServerOptions = {},
+): ClassDecorator {
+  const metadata: AsyncApiServerMetadata = { name, host, protocol, ...options };
+
+  return (target) => {
+    const existing =
+      (Reflect.getMetadata(ASYNC_API_SERVERS_METADATA, target) as
+        | AsyncApiServerMetadata[]
+        | undefined) ?? [];
+    Reflect.defineMetadata(
+      ASYNC_API_SERVERS_METADATA,
+      [...existing, metadata],
+      target,
+    );
+  };
+}
+
+/**
+ * Attach protocol-specific bindings to a channel.
+ *
+ * Apply at class level alongside {@link AsyncApiChannel}. The bindings map is
+ * keyed by protocol (`kafka`, `amqp`, …) and emitted verbatim onto the channel's
+ * `bindings`, carrying topic/exchange/queue details the core Channel Object
+ * cannot express.
+ *
+ * @param bindings The protocol-keyed channel bindings.
+ */
+export function AsyncApiChannelBindings(
+  bindings: AsyncApiChannelBindingsMap,
+): ClassDecorator {
+  return (target) => {
+    Reflect.defineMetadata(
+      ASYNC_API_CHANNEL_BINDINGS_METADATA,
+      bindings,
+      target,
+    );
+  };
+}
+
+/**
+ * Attach protocol-specific bindings to an operation.
+ *
+ * Apply at method level alongside {@link AsyncApiPub} / {@link AsyncApiSub}. The
+ * bindings map is keyed by protocol (`kafka`, `nats`, `mqtt`, `amqp`) and emitted
+ * verbatim onto the operation's `bindings`, carrying consumer-group, queue, QoS,
+ * and delivery details.
+ *
+ * @param bindings The protocol-keyed operation bindings.
+ */
+export function AsyncApiOperationBindings(
+  bindings: AsyncApiOperationBindingsMap,
+): MethodDecorator {
+  return (target, propertyKey, descriptor) => {
+    Reflect.defineMetadata(
+      ASYNC_API_OPERATION_BINDINGS_METADATA,
+      bindings,
+      descriptor.value as object,
+    );
+    return descriptor;
+  };
+}
+
+/**
+ * Attach protocol-specific bindings to a message.
+ *
+ * Apply at method level alongside {@link AsyncApiMessage}. The bindings map is
+ * keyed by protocol (`kafka`, `mqtt`, `amqp`) and emitted verbatim onto the
+ * generated message's `bindings`, carrying message-key, content-encoding, and
+ * payload-format details.
+ *
+ * @param bindings The protocol-keyed message bindings.
+ */
+export function AsyncApiMessageBindings(
+  bindings: AsyncApiMessageBindingsMap,
+): MethodDecorator {
+  return (target, propertyKey, descriptor) => {
+    Reflect.defineMetadata(
+      ASYNC_API_MESSAGE_BINDINGS_METADATA,
+      bindings,
       descriptor.value as object,
     );
     return descriptor;

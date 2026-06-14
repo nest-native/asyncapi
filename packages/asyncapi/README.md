@@ -12,9 +12,11 @@
 > (`AsyncApiModule.forRoot()` / `forRootAsync()`), the channel and operation
 > decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`), message and
 > header payloads (`@AsyncApiMessage`, `@AsyncApiHeaders`) with DTO ↔ JSON Schema
-> generation, and document generation (`getAsyncApiDocument`) exist today.
-> Transport bindings, the `@AsyncApiServer` decorator, and the hosted docs route
-> land in later milestones. Do not depend on this in production yet.
+> generation, document generation (`getAsyncApiDocument`), and transport bindings
+> for Kafka, NATS, MQTT, and AMQP (`@AsyncApiServer`,
+> `@AsyncApiChannelBindings`, `@AsyncApiOperationBindings`,
+> `@AsyncApiMessageBindings`) exist today. The hosted docs route lands in a later
+> milestone. Do not depend on this in production yet.
 
 ## What This Is
 
@@ -37,7 +39,7 @@ runtime transport.
 | Node.js | `>=20` |
 | NestJS | `11.x` |
 | AsyncAPI spec target | `3.0` (2.x: best-effort conversion only) |
-| Transports | Kafka, NATS, MQTT, AMQP (bindings arrive in later milestones) |
+| Transports | Kafka, NATS, MQTT, AMQP (typed bindings) |
 
 The published package has no runtime dependencies. The NestJS packages are
 declared as `peerDependencies`, and the AsyncAPI parser and viewer are optional
@@ -179,6 +181,50 @@ class ShipmentsHandler {
 The message name defaults to the DTO class name (or the schema source `name`),
 the content type defaults to `application/json`, and a payload DTO shared across
 messages is emitted once under its class name.
+
+## Transport bindings
+
+AsyncAPI 3.0 carries protocol-specific detail in *bindings*. `@nest-native/asyncapi`
+ships typed bindings for **Kafka, NATS, MQTT, and AMQP** across all four binding
+scopes:
+
+- `@AsyncApiServer(name, host, protocol, options)` — declare a broker (class
+  level, repeatable). The `protocol` and server `bindings` carry the transport
+  identity and connection metadata.
+- `@AsyncApiChannelBindings({ kafka, amqp })` — channel topic/exchange details.
+- `@AsyncApiOperationBindings({ kafka, nats, mqtt, amqp })` — consumer groups,
+  queue groups, QoS, delivery mode.
+- `@AsyncApiMessageBindings({ kafka, mqtt, amqp })` — message wire-format detail.
+
+```ts
+import {
+  AsyncApiChannel,
+  AsyncApiChannelBindings,
+  AsyncApiOperationBindings,
+  AsyncApiPub,
+  AsyncApiServer,
+} from '@nest-native/asyncapi';
+
+@AsyncApiServer('kafka', 'kafka.example.com:9092', 'kafka', {
+  bindings: { kafka: { schemaRegistryVendor: 'confluent', bindingVersion: '0.5.0' } },
+})
+@AsyncApiChannel('orders', { address: 'orders.v1' })
+@AsyncApiChannelBindings({
+  kafka: { topic: 'orders.v1', partitions: 3, bindingVersion: '0.5.0' },
+})
+class OrdersHandler {
+  @AsyncApiPub({ operationId: 'orderPlaced' })
+  @AsyncApiOperationBindings({
+    kafka: { groupId: { type: 'string' }, bindingVersion: '0.5.0' },
+  })
+  publishOrderPlaced(): void {}
+}
+```
+
+The binding maps are typed for the four v1 protocols but stay open, so any other
+protocol's spec-compliant binding can be attached verbatim. Bindings are emitted
+unchanged, so the official `@asyncapi/parser` remains the source of truth for
+what is valid.
 
 ## Links
 

@@ -7,9 +7,13 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   AsyncApiChannel,
+  AsyncApiChannelBindings,
   AsyncApiHeaders,
   AsyncApiMessage,
+  AsyncApiMessageBindings,
+  AsyncApiOperationBindings,
   AsyncApiPub,
+  AsyncApiServer,
   AsyncApiSub,
 } from '../decorators';
 import { buildAsyncApiDocument } from '../generator';
@@ -90,6 +94,107 @@ describe('@asyncapi/parser validation', () => {
     const document = buildAsyncApiDocument(
       { title: 'Shipments Service', version: '1.0.0' },
       [{ metatype: ShipmentsChannel, methodNames: ['onOrderShipped'] }],
+    );
+
+    assert.deepEqual(await validate(document), []);
+  });
+
+  it('validates Kafka servers, channel, operation, and message bindings', async () => {
+    @AsyncApiServer('production', 'broker.example.com:9092', 'kafka', {
+      title: 'Production Kafka',
+      bindings: {
+        kafka: {
+          schemaRegistryUrl: 'https://registry.example.com',
+          schemaRegistryVendor: 'confluent',
+          bindingVersion: '0.5.0',
+        },
+      },
+    })
+    @AsyncApiChannel('orders', { address: 'orders.v1' })
+    @AsyncApiChannelBindings({
+      kafka: { topic: 'orders.v1', partitions: 3, replicas: 3, bindingVersion: '0.5.0' },
+    })
+    class OrdersChannel {
+      @AsyncApiPub({ operationId: 'publishOrderPlaced' })
+      @AsyncApiMessage({ name: 'OrderPlaced', schema: { type: 'object' } })
+      @AsyncApiOperationBindings({
+        kafka: { groupId: { type: 'string' }, bindingVersion: '0.5.0' },
+      })
+      @AsyncApiMessageBindings({
+        kafka: { schemaIdLocation: 'payload', bindingVersion: '0.5.0' },
+      })
+      publishOrderPlaced(): void {}
+    }
+
+    const document = buildAsyncApiDocument(
+      { title: 'Orders Service', version: '1.0.0' },
+      [{ metatype: OrdersChannel, methodNames: ['publishOrderPlaced'] }],
+    );
+
+    assert.deepEqual(await validate(document), []);
+  });
+
+  it('validates an AMQP channel and operation binding', async () => {
+    @AsyncApiServer('rabbit', 'rabbit.example.com:5672', 'amqp')
+    @AsyncApiChannel('invoices', { address: 'invoices' })
+    @AsyncApiChannelBindings({
+      amqp: {
+        is: 'routingKey',
+        exchange: { name: 'invoices', type: 'topic', durable: true },
+        bindingVersion: '0.3.0',
+      },
+    })
+    class InvoicesChannel {
+      @AsyncApiSub({ operationId: 'onInvoice' })
+      @AsyncApiMessage({ name: 'Invoice', schema: { type: 'object' } })
+      @AsyncApiOperationBindings({
+        amqp: { deliveryMode: 2, mandatory: true, bindingVersion: '0.3.0' },
+      })
+      @AsyncApiMessageBindings({
+        amqp: { contentEncoding: 'gzip', messageType: 'invoice', bindingVersion: '0.3.0' },
+      })
+      onInvoice(): void {}
+    }
+
+    const document = buildAsyncApiDocument(
+      { title: 'Invoices Service', version: '1.0.0' },
+      [{ metatype: InvoicesChannel, methodNames: ['onInvoice'] }],
+    );
+
+    assert.deepEqual(await validate(document), []);
+  });
+
+  it('validates NATS and MQTT operation bindings', async () => {
+    @AsyncApiServer('mqtt', 'broker.example.com:1883', 'mqtt', {
+      bindings: { mqtt: { clientId: 'orders-service', bindingVersion: '0.2.0' } },
+    })
+    @AsyncApiChannel('telemetry', { address: 'telemetry' })
+    class TelemetryChannel {
+      @AsyncApiSub({ operationId: 'onTelemetryNats' })
+      @AsyncApiOperationBindings({
+        nats: { queue: 'telemetry-workers', bindingVersion: '0.1.0' },
+      })
+      onTelemetryNats(): void {}
+
+      @AsyncApiSub({ operationId: 'onTelemetryMqtt' })
+      @AsyncApiMessage({ name: 'Telemetry', schema: { type: 'object' } })
+      @AsyncApiOperationBindings({
+        mqtt: { qos: 1, retain: false, bindingVersion: '0.2.0' },
+      })
+      @AsyncApiMessageBindings({
+        mqtt: { payloadFormatIndicator: 1, bindingVersion: '0.2.0' },
+      })
+      onTelemetryMqtt(): void {}
+    }
+
+    const document = buildAsyncApiDocument(
+      { title: 'Telemetry Service', version: '1.0.0' },
+      [
+        {
+          metatype: TelemetryChannel,
+          methodNames: ['onTelemetryNats', 'onTelemetryMqtt'],
+        },
+      ],
     );
 
     assert.deepEqual(await validate(document), []);

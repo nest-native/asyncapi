@@ -14,9 +14,13 @@ import {
 import { AsyncApiModule } from '../asyncapi.module';
 import {
   AsyncApiChannel,
+  AsyncApiChannelBindings,
   AsyncApiHeaders,
   AsyncApiMessage,
+  AsyncApiMessageBindings,
+  AsyncApiOperationBindings,
   AsyncApiPub,
+  AsyncApiServer,
   AsyncApiSub,
 } from '../decorators';
 import { ScannedHandler } from '../scanner';
@@ -491,6 +495,227 @@ describe('buildAsyncApiDocument message integration', () => {
     assert.deepEqual(Object.keys(document.channels.mixed.messages ?? {}), [
       'WithMessage',
     ]);
+  });
+});
+
+describe('buildAsyncApiDocument transport bindings', () => {
+  it('attaches channel bindings from @AsyncApiChannelBindings', () => {
+    @AsyncApiChannel('orders', { address: 'orders' })
+    @AsyncApiChannelBindings({
+      kafka: { topic: 'orders', partitions: 3, bindingVersion: '0.5.0' },
+    })
+    class OrdersChannel {}
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: [] },
+    ]);
+
+    assert.deepEqual(document.channels.orders.bindings, {
+      kafka: { topic: 'orders', partitions: 3, bindingVersion: '0.5.0' },
+    });
+  });
+
+  it('omits channel bindings when none are declared', () => {
+    @AsyncApiChannel('orders')
+    class OrdersChannel {}
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: [] },
+    ]);
+
+    assert.ok(!('bindings' in document.channels.orders));
+  });
+
+  it('attaches operation bindings from @AsyncApiOperationBindings', () => {
+    @AsyncApiChannel('orders')
+    class OrdersChannel {
+      @AsyncApiPub({ operationId: 'placeOrder' })
+      @AsyncApiOperationBindings({
+        kafka: { groupId: { type: 'string' }, bindingVersion: '0.5.0' },
+      })
+      placeOrder(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: ['placeOrder'] },
+    ]);
+
+    assert.deepEqual(document.operations.placeOrder.bindings, {
+      kafka: { groupId: { type: 'string' }, bindingVersion: '0.5.0' },
+    });
+  });
+
+  it('omits operation bindings when none are declared', () => {
+    @AsyncApiChannel('orders')
+    class OrdersChannel {
+      @AsyncApiPub({ operationId: 'placeOrder' })
+      placeOrder(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: ['placeOrder'] },
+    ]);
+
+    assert.ok(!('bindings' in document.operations.placeOrder));
+  });
+
+  it('attaches message bindings from @AsyncApiMessageBindings', () => {
+    @AsyncApiChannel('orders')
+    class OrdersChannel {
+      @AsyncApiPub({ operationId: 'placeOrder' })
+      @AsyncApiMessage({ name: 'OrderPlaced', schema: { type: 'object' } })
+      @AsyncApiMessageBindings({
+        amqp: { contentEncoding: 'gzip', bindingVersion: '0.3.0' },
+      })
+      placeOrder(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: ['placeOrder'] },
+    ]);
+
+    assert.deepEqual(document.components.messages?.OrderPlaced.bindings, {
+      amqp: { contentEncoding: 'gzip', bindingVersion: '0.3.0' },
+    });
+  });
+
+  it('omits message bindings when none are declared', () => {
+    @AsyncApiChannel('orders')
+    class OrdersChannel {
+      @AsyncApiPub({ operationId: 'placeOrder' })
+      @AsyncApiMessage({ name: 'OrderPlaced', schema: { type: 'object' } })
+      placeOrder(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: ['placeOrder'] },
+    ]);
+
+    assert.ok(!('bindings' in (document.components.messages?.OrderPlaced ?? {})));
+  });
+});
+
+describe('buildAsyncApiDocument servers', () => {
+  it('omits the servers section when no server is declared', () => {
+    @AsyncApiChannel('orders')
+    class OrdersChannel {}
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: [] },
+    ]);
+
+    assert.ok(!('servers' in document));
+  });
+
+  it('emits a server from a single @AsyncApiServer declaration', () => {
+    @AsyncApiServer('production', 'broker:9092', 'kafka', {
+      title: 'Production Kafka',
+      bindings: { kafka: { schemaRegistryVendor: 'confluent' } },
+    })
+    @AsyncApiChannel('orders')
+    class OrdersChannel {}
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: [] },
+    ]);
+
+    assert.deepEqual(document.servers, {
+      production: {
+        host: 'broker:9092',
+        protocol: 'kafka',
+        title: 'Production Kafka',
+        bindings: { kafka: { schemaRegistryVendor: 'confluent' } },
+      },
+    });
+  });
+
+  it('copies through every supplied server field', () => {
+    @AsyncApiServer('full', 'host:1', 'mqtt', {
+      protocolVersion: '5',
+      pathname: '/p',
+      title: 'T',
+      summary: 'S',
+      description: 'D',
+    })
+    class Handler {}
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: Handler, methodNames: [] },
+    ]);
+
+    assert.deepEqual(document.servers?.full, {
+      host: 'host:1',
+      protocol: 'mqtt',
+      protocolVersion: '5',
+      pathname: '/p',
+      title: 'T',
+      summary: 'S',
+      description: 'D',
+    });
+  });
+
+  it('collects servers from a class that declares no channel', () => {
+    @AsyncApiServer('nats', 'nats://localhost:4222', 'nats')
+    class Servers {}
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: Servers, methodNames: [] },
+    ]);
+
+    assert.deepEqual(document.servers, {
+      nats: { host: 'nats://localhost:4222', protocol: 'nats' },
+    });
+    assert.deepEqual(document.channels, {});
+  });
+
+  it('merges several server declarations across classes', () => {
+    @AsyncApiServer('kafka', 'broker:9092', 'kafka')
+    class KafkaServers {}
+
+    @AsyncApiServer('mqtt', 'localhost:1883', 'mqtt')
+    class MqttServers {}
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: KafkaServers, methodNames: [] },
+      { metatype: MqttServers, methodNames: [] },
+    ]);
+
+    assert.deepEqual(Object.keys(document.servers ?? {}).sort(), [
+      'kafka',
+      'mqtt',
+    ]);
+  });
+
+  it('tolerates re-declaring an identical server across classes', () => {
+    @AsyncApiServer('shared', 'broker:9092', 'kafka', { title: 'Shared' })
+    class First {}
+
+    @AsyncApiServer('shared', 'broker:9092', 'kafka', { title: 'Shared' })
+    class Second {}
+
+    assert.doesNotThrow(() =>
+      buildAsyncApiDocument({}, [
+        { metatype: First, methodNames: [] },
+        { metatype: Second, methodNames: [] },
+      ]),
+    );
+  });
+
+  it('throws when two classes register a conflicting server name', () => {
+    @AsyncApiServer('shared', 'broker:9092', 'kafka')
+    class First {}
+
+    @AsyncApiServer('shared', 'other:9092', 'kafka')
+    class Second {}
+
+    assert.throws(
+      () =>
+        buildAsyncApiDocument({}, [
+          { metatype: First, methodNames: [] },
+          { metatype: Second, methodNames: [] },
+        ]),
+      /Conflicting AsyncAPI server named "shared" produced by Second/,
+    );
   });
 });
 
