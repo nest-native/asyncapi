@@ -1,5 +1,6 @@
 import { Type } from '@nestjs/common';
 import { AsyncApiSchemaObject } from './document';
+import { buildRef } from './references';
 
 /**
  * A pre-computed JSON Schema together with the name it should be registered
@@ -138,7 +139,7 @@ export class AsyncApiSchemaRegistry {
     }
 
     this.schemas[name] = schema;
-    return `#/components/schemas/${name}`;
+    return buildRef('#/components/schemas', name);
   }
 }
 

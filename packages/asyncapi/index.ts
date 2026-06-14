@@ -6,6 +6,7 @@ export * from './docs';
 export * from './document';
 export * from './generator';
 export * from './interfaces';
+export * from './references';
 export * from './scanner';
 export * from './schema';
 export * from './serializer';
