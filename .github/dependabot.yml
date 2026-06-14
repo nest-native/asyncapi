@@ -1,0 +1,52 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    groups:
+      dev-tooling-minor-patch:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
+      nest-asyncapi-peer-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "@asyncapi/parser"
+          - "@asyncapi/react-component"
+          - "@nestjs/common"
+          - "@nestjs/core"
+          - "@nestjs/platform-express"
+          - "@nestjs/platform-fastify"
+          - "@nestjs/swagger"
+          - "class-validator"
+          - "reflect-metadata"
+          - "rxjs"
+          - "zod"
+          - "zod-to-json-schema"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(actions)"
+      include: "scope"

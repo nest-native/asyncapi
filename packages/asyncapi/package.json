@@ -1,0 +1,88 @@
+{
+  "name": "@nest-native/asyncapi",
+  "version": "0.0.0",
+  "description": "Decorator-first AsyncAPI 3.0 documentation generator for NestJS event-driven services — the AsyncAPI counterpart to @nestjs/swagger",
+  "keywords": [
+    "nestjs",
+    "asyncapi",
+    "asyncapi-3",
+    "event-driven",
+    "microservices",
+    "messaging",
+    "documentation",
+    "decorators",
+    "dependency-injection",
+    "typescript"
+  ],
+  "author": "Rodrigo Nogueira",
+  "license": "MIT",
+  "homepage": "https://github.com/nest-native/asyncapi#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nest-native/asyncapi.git",
+    "directory": "packages/asyncapi"
+  },
+  "bugs": {
+    "url": "https://github.com/nest-native/asyncapi/issues"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/**/*.d.ts",
+    "dist/**/*.js",
+    "dist/**/*.js.map"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "reflect-metadata": "^0.1.12 || ^0.2.0",
+    "rxjs": "^7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@asyncapi/parser": {
+      "optional": true
+    },
+    "@asyncapi/react-component": {
+      "optional": true
+    },
+    "@nestjs/swagger": {
+      "optional": true
+    },
+    "class-validator": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    },
+    "zod-to-json-schema": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.26",
+    "@nestjs/core": "^11.1.26",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "typescript": "^6.0.3"
+  }
+}
