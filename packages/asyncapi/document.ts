@@ -59,6 +59,62 @@ export interface AsyncApiInfo {
 }
 
 /**
+ * A JSON Reference into the document, used wherever AsyncAPI permits a
+ * `$ref` in place of an inline object.
+ *
+ * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0#referenceObject
+ */
+export interface AsyncApiReference {
+  /** A JSON pointer such as `#/components/schemas/OrderPlaced`. */
+  $ref: string;
+}
+
+/**
+ * A JSON Schema describing a message payload or its headers.
+ *
+ * AsyncAPI 3.0 uses JSON Schema (draft 7 compatible) for `payload` and
+ * `headers`, the same schema dialect `@nestjs/swagger` emits for HTTP bodies,
+ * so a schema produced by the `@nestjs/swagger` chain or by `zod-to-json-schema`
+ * drops in unchanged. The type stays intentionally open — JSON Schema is large
+ * and the generator never rewrites the schemas it is handed.
+ *
+ * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0#schemaObject
+ */
+export interface AsyncApiSchemaObject {
+  /** A `$ref` to a reusable schema, when the schema is a reference. */
+  $ref?: string;
+  /** Any other JSON Schema keyword (`type`, `properties`, `required`, …). */
+  [keyword: string]: unknown;
+}
+
+/**
+ * An AsyncAPI 3.0 Message Object.
+ *
+ * A message couples a payload schema with optional headers and human-readable
+ * metadata. Messages live in `components.messages`; channels reference them and
+ * operations reference the channel's messages, keeping a single definition
+ * reusable across the document.
+ *
+ * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0#messageObject
+ */
+export interface AsyncApiMessageObject {
+  /** A machine-friendly name for the message. */
+  name?: string;
+  /** A human-friendly title for the message. */
+  title?: string;
+  /** A short summary of what the message is about. */
+  summary?: string;
+  /** A verbose explanation of the message. */
+  description?: string;
+  /** The content type the payload is encoded with (e.g. `application/json`). */
+  contentType?: string;
+  /** A schema (or `$ref`) describing the message payload. */
+  payload?: AsyncApiSchemaObject;
+  /** A schema (or `$ref`) describing the message headers. */
+  headers?: AsyncApiSchemaObject;
+}
+
+/**
  * An AsyncAPI 3.0 Channel Object.
  *
  * A channel is an addressable component where messages flow. The 3.0
@@ -79,6 +135,13 @@ export interface AsyncApiChannelObject {
   summary?: string;
   /** A verbose explanation of the channel. */
   description?: string;
+  /**
+   * The messages this channel carries, keyed by a channel-local message key.
+   * Each entry references a reusable message in `components.messages`. Operations
+   * point at these entries rather than at the components directly, as AsyncAPI
+   * 3.0 prescribes.
+   */
+  messages?: Record<string, AsyncApiReference>;
 }
 
 /**
@@ -112,14 +175,31 @@ export interface AsyncApiOperationObject {
   summary?: string;
   /** A verbose explanation of the operation. */
   description?: string;
+  /**
+   * The messages this operation sends or receives, each referencing one of the
+   * channel's messages (`#/channels/<id>/messages/<key>`). AsyncAPI 3.0 keeps
+   * the operation's messages a subset of its channel's messages.
+   */
+  messages?: AsyncApiReference[];
 }
 
 /**
- * The reusable definitions container of an AsyncAPI 3.0 document. Sub-sections
- * are added as later milestones introduce messages, schemas, and bindings.
+ * The reusable definitions container of an AsyncAPI 3.0 document. `messages`
+ * and `schemas` are populated from `@AsyncApiMessage` / `@AsyncApiHeaders`
+ * metadata; further sub-sections (servers, bindings) are added by later
+ * milestones.
  */
 export interface AsyncApiComponents {
-  [section: string]: Record<string, unknown> | undefined;
+  /** Reusable Message Objects referenced by channels, keyed by message name. */
+  messages?: Record<string, AsyncApiMessageObject>;
+  /** Reusable JSON Schemas referenced by messages, keyed by schema name. */
+  schemas?: Record<string, AsyncApiSchemaObject>;
+  /** Other components sub-sections introduced by later milestones. */
+  [section: string]:
+    | Record<string, AsyncApiMessageObject>
+    | Record<string, AsyncApiSchemaObject>
+    | Record<string, unknown>
+    | undefined;
 }
 
 /**

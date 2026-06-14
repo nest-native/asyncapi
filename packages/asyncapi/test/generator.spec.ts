@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import 'reflect-metadata';
 import { Controller, Injectable } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { ApiProperty } from '@nestjs/swagger';
 import { ASYNC_API_VERSION } from '../document';
 import {
   buildAsyncApiDocument,
@@ -11,7 +12,13 @@ import {
   getAsyncApiDocument,
 } from '../generator';
 import { AsyncApiModule } from '../asyncapi.module';
-import { AsyncApiChannel, AsyncApiPub, AsyncApiSub } from '../decorators';
+import {
+  AsyncApiChannel,
+  AsyncApiHeaders,
+  AsyncApiMessage,
+  AsyncApiPub,
+  AsyncApiSub,
+} from '../decorators';
 import { ScannedHandler } from '../scanner';
 
 @Injectable()
@@ -239,6 +246,251 @@ describe('buildAsyncApiDocument', () => {
         ]),
       /Duplicate AsyncAPI operation id "shared" produced by ShipmentsChannel\.handleShipped/,
     );
+  });
+});
+
+describe('buildAsyncApiDocument message integration', () => {
+  it('wires a DTO payload and headers into messages and schemas', () => {
+    class OrderHeaders {
+      @ApiProperty()
+      traceId!: string;
+    }
+
+    class OrderPlaced {
+      @ApiProperty()
+      id!: string;
+
+      @ApiProperty({ minimum: 0 })
+      amount!: number;
+    }
+
+    @AsyncApiChannel('orders', { address: 'orders.v1' })
+    class OrdersChannel {
+      @AsyncApiPub({ operationId: 'orderPlaced' })
+      @AsyncApiMessage(OrderPlaced, { summary: 'A customer placed an order' })
+      @AsyncApiHeaders(OrderHeaders)
+      placeOrder(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: OrdersChannel, methodNames: ['placeOrder'] },
+    ]);
+
+    assert.deepEqual(document.channels.orders.messages, {
+      OrderPlaced: { $ref: '#/components/messages/OrderPlaced' },
+    });
+    assert.deepEqual(document.operations.orderPlaced.messages, [
+      { $ref: '#/channels/orders/messages/OrderPlaced' },
+    ]);
+    assert.deepEqual(document.components.messages?.OrderPlaced, {
+      name: 'OrderPlaced',
+      contentType: 'application/json',
+      summary: 'A customer placed an order',
+      payload: { $ref: '#/components/schemas/OrderPlaced' },
+      headers: { $ref: '#/components/schemas/OrderHeaders' },
+    });
+    assert.ok(document.components.schemas?.OrderPlaced);
+    assert.ok(document.components.schemas?.OrderHeaders);
+  });
+
+  it('copies through every supplied message field and a custom content type', () => {
+    class Event {
+      @ApiProperty()
+      id!: string;
+    }
+
+    @AsyncApiChannel('events')
+    class EventsChannel {
+      @AsyncApiSub()
+      @AsyncApiMessage(Event, {
+        name: 'DomainEvent',
+        title: 'Domain event',
+        summary: 'Something happened',
+        description: 'A verbose domain event description',
+        contentType: 'application/cloudevents+json',
+      })
+      onEvent(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: EventsChannel, methodNames: ['onEvent'] },
+    ]);
+
+    assert.deepEqual(document.components.messages?.DomainEvent, {
+      name: 'DomainEvent',
+      title: 'Domain event',
+      summary: 'Something happened',
+      description: 'A verbose domain event description',
+      contentType: 'application/cloudevents+json',
+      payload: { $ref: '#/components/schemas/Event' },
+    });
+    assert.deepEqual(document.channels.events.messages, {
+      DomainEvent: { $ref: '#/components/messages/DomainEvent' },
+    });
+  });
+
+  it('accepts a pre-computed JSON Schema payload (the Zod path)', () => {
+    @AsyncApiChannel('shipments')
+    class ShipmentsChannel {
+      @AsyncApiSub({ operationId: 'onShipped' })
+      @AsyncApiMessage({
+        name: 'OrderShipped',
+        schema: {
+          type: 'object',
+          properties: { orderId: { type: 'string' } },
+          required: ['orderId'],
+        },
+      })
+      onShipped(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: ShipmentsChannel, methodNames: ['onShipped'] },
+    ]);
+
+    assert.deepEqual(document.components.schemas?.OrderShipped, {
+      type: 'object',
+      properties: { orderId: { type: 'string' } },
+      required: ['orderId'],
+    });
+    assert.equal(
+      document.components.messages?.OrderShipped.payload?.$ref,
+      '#/components/schemas/OrderShipped',
+    );
+    assert.ok(!('headers' in (document.components.messages?.OrderShipped ?? {})));
+  });
+
+  it('omits the components sub-sections when no message is declared', () => {
+    @AsyncApiChannel('plain')
+    class PlainChannel {
+      @AsyncApiPub()
+      emit(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: PlainChannel, methodNames: ['emit'] },
+    ]);
+
+    assert.deepEqual(document.components, {});
+    assert.ok(!('messages' in document.channels.plain));
+    assert.ok(!('messages' in document.operations.emit));
+  });
+
+  it('reuses a shared payload DTO across messages without duplicating it', () => {
+    class Shared {
+      @ApiProperty()
+      id!: string;
+    }
+
+    @AsyncApiChannel('a')
+    class ChannelA {
+      @AsyncApiPub({ operationId: 'aOp' })
+      @AsyncApiMessage(Shared, { name: 'SharedA' })
+      a(): void {}
+    }
+
+    @AsyncApiChannel('b')
+    class ChannelB {
+      @AsyncApiSub({ operationId: 'bOp' })
+      @AsyncApiMessage(Shared, { name: 'SharedB' })
+      b(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: ChannelA, methodNames: ['a'] },
+      { metatype: ChannelB, methodNames: ['b'] },
+    ]);
+
+    assert.deepEqual(Object.keys(document.components.schemas ?? {}), ['Shared']);
+    assert.equal(
+      document.components.messages?.SharedA.payload?.$ref,
+      '#/components/schemas/Shared',
+    );
+    assert.equal(
+      document.components.messages?.SharedB.payload?.$ref,
+      '#/components/schemas/Shared',
+    );
+  });
+
+  it('throws when two handlers register a conflicting message name', () => {
+    // The two messages share the message name "Clash" but carry distinct payload
+    // schemas (different schema names), so the schema registry accepts both and
+    // the conflict surfaces at the message level instead.
+    @AsyncApiChannel('one')
+    class ChannelOne {
+      @AsyncApiPub({ operationId: 'oneOp' })
+      @AsyncApiMessage(
+        { name: 'PayloadOne', schema: { type: 'object' } },
+        { name: 'Clash', summary: 'first' },
+      )
+      one(): void {}
+    }
+
+    @AsyncApiChannel('two')
+    class ChannelTwo {
+      @AsyncApiSub({ operationId: 'twoOp' })
+      @AsyncApiMessage(
+        { name: 'PayloadTwo', schema: { type: 'string' } },
+        { name: 'Clash', summary: 'second' },
+      )
+      two(): void {}
+    }
+
+    assert.throws(
+      () =>
+        buildAsyncApiDocument({}, [
+          { metatype: ChannelOne, methodNames: ['one'] },
+          { metatype: ChannelTwo, methodNames: ['two'] },
+        ]),
+      /Conflicting AsyncAPI message named "Clash" produced by ChannelTwo\.two/,
+    );
+  });
+
+  it('tolerates re-declaring an identical message name', () => {
+    const schema = { type: 'object' as const };
+
+    @AsyncApiChannel('alpha')
+    class Alpha {
+      @AsyncApiPub({ operationId: 'alphaOp' })
+      @AsyncApiMessage({ name: 'Same', schema })
+      alpha(): void {}
+    }
+
+    @AsyncApiChannel('beta')
+    class Beta {
+      @AsyncApiSub({ operationId: 'betaOp' })
+      @AsyncApiMessage({ name: 'Same', schema })
+      beta(): void {}
+    }
+
+    assert.doesNotThrow(() =>
+      buildAsyncApiDocument({}, [
+        { metatype: Alpha, methodNames: ['alpha'] },
+        { metatype: Beta, methodNames: ['beta'] },
+      ]),
+    );
+  });
+
+  it('does not attach a message to an operation without @AsyncApiMessage', () => {
+    @AsyncApiChannel('mixed')
+    class MixedChannel {
+      @AsyncApiPub({ operationId: 'withMessage' })
+      @AsyncApiMessage({ name: 'WithMessage', schema: { type: 'object' } })
+      withMessage(): void {}
+
+      @AsyncApiSub({ operationId: 'withoutMessage' })
+      withoutMessage(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: MixedChannel, methodNames: ['withMessage', 'withoutMessage'] },
+    ]);
+
+    assert.ok(document.operations.withMessage.messages);
+    assert.ok(!('messages' in document.operations.withoutMessage));
+    assert.deepEqual(Object.keys(document.channels.mixed.messages ?? {}), [
+      'WithMessage',
+    ]);
   });
 });
 

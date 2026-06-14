@@ -2,10 +2,14 @@ import { INestApplicationContext, Type } from '@nestjs/common';
 import { MetadataScanner, ModulesContainer } from '@nestjs/core';
 import {
   ASYNC_API_CHANNEL_METADATA,
+  ASYNC_API_HEADERS_METADATA,
+  ASYNC_API_MESSAGE_METADATA,
   ASYNC_API_OPERATION_METADATA,
 } from './constants';
 import {
   AsyncApiChannelMetadata,
+  AsyncApiHeadersMetadata,
+  AsyncApiMessageMetadata,
   AsyncApiOperationMetadata,
 } from './decorators';
 import {
@@ -13,10 +17,12 @@ import {
   AsyncApiChannelObject,
   AsyncApiDocument,
   AsyncApiInfo,
+  AsyncApiMessageObject,
   AsyncApiOperationObject,
 } from './document';
 import { AsyncApiDocumentConfig } from './interfaces';
 import { AsyncApiDocumentScanner, ScannedHandler } from './scanner';
+import { AsyncApiSchemaRegistry, SchemaSource } from './schema';
 
 /**
  * The default title used when a document config omits one.
@@ -89,6 +95,40 @@ function readOperationMetadata(
 }
 
 /**
+ * Read the {@link AsyncApiMessageMetadata} an {@link AsyncApiMessage} decorator
+ * left on a prototype method, or `undefined` when the method has no payload.
+ */
+function readMessageMetadata(
+  method: unknown,
+): AsyncApiMessageMetadata | undefined {
+  return Reflect.getMetadata(ASYNC_API_MESSAGE_METADATA, method as object) as
+    | AsyncApiMessageMetadata
+    | undefined;
+}
+
+/**
+ * Read the {@link AsyncApiHeadersMetadata} an {@link AsyncApiHeaders} decorator
+ * left on a prototype method, or `undefined` when the method has no headers.
+ */
+function readHeadersMetadata(
+  method: unknown,
+): AsyncApiHeadersMetadata | undefined {
+  return Reflect.getMetadata(ASYNC_API_HEADERS_METADATA, method as object) as
+    | AsyncApiHeadersMetadata
+    | undefined;
+}
+
+/**
+ * Derive the name a schema source contributes. A DTO class exposes its class
+ * name through `Function.prototype.name`; a {@link JsonSchemaSource} exposes the
+ * `name` it was created with. Both live on `.name`, so the same access works for
+ * either and doubles as the default message name.
+ */
+function schemaSourceName(source: SchemaSource): string {
+  return source.name;
+}
+
+/**
  * Build a Channel Object from its metadata, defaulting the address to the
  * channel id and copying through only the optional fields that were provided.
  */
@@ -139,40 +179,156 @@ function buildOperation(
 }
 
 /**
- * The mutable document body that {@link collectHandler} appends channels and
- * operations to as it visits each decorated handler.
+ * Build the descriptive fields of a Message Object, copying through only the
+ * metadata the decorator supplied. Payload and headers schemas are attached by
+ * the caller once they are registered.
+ */
+function buildMessage(
+  metadata: AsyncApiMessageMetadata,
+  name: string,
+): AsyncApiMessageObject {
+  const message: AsyncApiMessageObject = {
+    name,
+    contentType: metadata.contentType ?? 'application/json',
+  };
+
+  if (metadata.title !== undefined) {
+    message.title = metadata.title;
+  }
+  if (metadata.summary !== undefined) {
+    message.summary = metadata.summary;
+  }
+  if (metadata.description !== undefined) {
+    message.description = metadata.description;
+  }
+
+  return message;
+}
+
+/**
+ * The mutable document body that {@link collectHandler} appends channels,
+ * operations, and reusable messages to as it visits each decorated handler. The
+ * {@link AsyncApiSchemaRegistry} accumulates `components.schemas` and dedupes
+ * shared DTOs across messages.
  */
 interface DocumentBody {
   channels: Record<string, AsyncApiChannelObject>;
   operations: Record<string, AsyncApiOperationObject>;
+  messages: Record<string, AsyncApiMessageObject>;
+  registry: AsyncApiSchemaRegistry;
 }
 
 /**
- * Read every operation off one channel handler and register it on the body,
- * raising on a duplicate operation id so collisions surface as build failures
- * rather than silently dropped operations.
+ * The pieces of a single discovered operation needed to register it: the
+ * channel it belongs to and the prototype method carrying its decorators.
+ */
+interface OperationContext {
+  handler: ScannedHandler;
+  channelId: string;
+  methodName: string;
+  method: unknown;
+}
+
+/**
+ * Register the message an operation declares (if any) and wire it into the
+ * document: store the reusable message in `components.messages`, expose it on
+ * the channel, and return the channel-local reference the operation points at.
+ * Operations without an {@link AsyncApiMessage} contribute no message.
+ */
+function collectMessage(
+  body: DocumentBody,
+  context: OperationContext,
+): string | undefined {
+  const messageMeta = readMessageMetadata(context.method);
+  if (messageMeta === undefined) {
+    return undefined;
+  }
+
+  const messageName = messageMeta.name ?? schemaSourceName(messageMeta.payload);
+  const message = buildMessage(messageMeta, messageName);
+  message.payload = { $ref: body.registry.register(messageMeta.payload) };
+
+  const headersMeta = readHeadersMetadata(context.method);
+  if (headersMeta !== undefined) {
+    message.headers = { $ref: body.registry.register(headersMeta.headers) };
+  }
+
+  registerMessage(body, context, messageName, message);
+
+  return `#/channels/${context.channelId}/messages/${messageName}`;
+}
+
+/**
+ * Place a built message into `components.messages` and onto its channel,
+ * treating a name reused for a structurally different message as a build
+ * failure so collisions never silently overwrite a definition.
+ */
+function registerMessage(
+  body: DocumentBody,
+  context: OperationContext,
+  messageName: string,
+  message: AsyncApiMessageObject,
+): void {
+  const existing = body.messages[messageName];
+  if (existing !== undefined && JSON.stringify(existing) !== JSON.stringify(message)) {
+    throw new Error(
+      `Conflicting AsyncAPI message named "${messageName}" produced by ${context.handler.metatype.name}.${context.methodName}.`,
+    );
+  }
+
+  body.messages[messageName] = message;
+
+  const channel = body.channels[context.channelId];
+  channel.messages ??= {};
+  channel.messages[messageName] = { $ref: `#/components/messages/${messageName}` };
+}
+
+/**
+ * Register one discovered operation on the body, attaching its message
+ * reference when the method declares a payload.
+ */
+function collectOperation(body: DocumentBody, context: OperationContext): void {
+  const operationMeta = readOperationMetadata(
+    context.handler.metatype.prototype as object,
+    context.methodName,
+  );
+  if (operationMeta === undefined) {
+    return;
+  }
+
+  const operationId = operationMeta.operationId ?? context.methodName;
+  if (operationId in body.operations) {
+    throw new Error(
+      `Duplicate AsyncAPI operation id "${operationId}" produced by ${context.handler.metatype.name}.${context.methodName}.`,
+    );
+  }
+
+  const operation = buildOperation(operationMeta, context.channelId);
+  const messageRef = collectMessage(body, context);
+  if (messageRef !== undefined) {
+    operation.messages = [{ $ref: messageRef }];
+  }
+
+  body.operations[operationId] = operation;
+}
+
+/**
+ * Read every operation off one channel handler and register it on the body.
  */
 function collectOperations(
   body: DocumentBody,
   handler: ScannedHandler,
   channelId: string,
 ): void {
-  const prototype = handler.metatype.prototype as object;
+  const prototype = handler.metatype.prototype as Record<string, unknown>;
 
   for (const methodName of handler.methodNames) {
-    const operationMeta = readOperationMetadata(prototype, methodName);
-    if (operationMeta === undefined) {
-      continue;
-    }
-
-    const operationId = operationMeta.operationId ?? methodName;
-    if (operationId in body.operations) {
-      throw new Error(
-        `Duplicate AsyncAPI operation id "${operationId}" produced by ${handler.metatype.name}.${methodName}.`,
-      );
-    }
-
-    body.operations[operationId] = buildOperation(operationMeta, channelId);
+    collectOperation(body, {
+      handler,
+      channelId,
+      methodName,
+      method: prototype[methodName],
+    });
   }
 }
 
@@ -211,7 +367,12 @@ export function buildAsyncApiDocument(
   config: AsyncApiDocumentConfig,
   handlers: ScannedHandler[],
 ): AsyncApiDocument {
-  const body: DocumentBody = { channels: {}, operations: {} };
+  const body: DocumentBody = {
+    channels: {},
+    operations: {},
+    messages: {},
+    registry: new AsyncApiSchemaRegistry(),
+  };
 
   for (const handler of handlers) {
     collectHandler(body, handler);
@@ -222,8 +383,27 @@ export function buildAsyncApiDocument(
     info: buildInfo(config),
     channels: body.channels,
     operations: body.operations,
-    components: {},
+    components: buildComponents(body),
   };
+}
+
+/**
+ * Assemble the `components` object, emitting `messages` and `schemas` only when
+ * a handler declared at least one. An application with no `@AsyncApiMessage`
+ * decorators still produces a valid (empty) `components` object.
+ */
+function buildComponents(body: DocumentBody): AsyncApiDocument['components'] {
+  const components: AsyncApiDocument['components'] = {};
+  const schemas = body.registry.getSchemas();
+
+  if (Object.keys(body.messages).length > 0) {
+    components.messages = body.messages;
+  }
+  if (Object.keys(schemas).length > 0) {
+    components.schemas = schemas;
+  }
+
+  return components;
 }
 
 /**

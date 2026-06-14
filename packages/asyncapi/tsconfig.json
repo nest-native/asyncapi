@@ -14,7 +14,8 @@
     "generator.ts",
     "index.ts",
     "interfaces.ts",
-    "scanner.ts"
+    "scanner.ts",
+    "schema.ts"
   ],
   "exclude": ["dist", "node_modules", "test/**/*", "*.spec.ts"]
 }

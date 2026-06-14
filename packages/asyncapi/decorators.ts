@@ -1,9 +1,12 @@
 import {
   ASYNC_API_CHANNEL_METADATA,
+  ASYNC_API_HEADERS_METADATA,
+  ASYNC_API_MESSAGE_METADATA,
   ASYNC_API_OPERATION_METADATA,
   AsyncApiAction,
   AsyncApiActionType,
 } from './constants';
+import { SchemaSource } from './schema';
 
 /**
  * Options accepted by {@link AsyncApiChannel}.
@@ -130,4 +133,98 @@ export function AsyncApiSub(
   options: AsyncApiOperationOptions = {},
 ): MethodDecorator {
   return createOperationDecorator(AsyncApiAction.Receive, options);
+}
+
+/**
+ * Options accepted by {@link AsyncApiMessage}.
+ *
+ * These map onto the descriptive fields of the AsyncAPI 3.0 Message Object. The
+ * payload schema itself comes from the first positional argument, not from here.
+ */
+export interface AsyncApiMessageOptions {
+  /**
+   * The message name used as the `components.messages` key and as the message's
+   * `name` field. Defaults to the payload DTO's class name, or to a
+   * {@link JsonSchemaSource}'s `name`.
+   */
+  name?: string;
+  /** A human-friendly title for the message. */
+  title?: string;
+  /** A short summary of what the message is about. */
+  summary?: string;
+  /** A verbose explanation of the message. */
+  description?: string;
+  /**
+   * The content type the payload is encoded with.
+   *
+   * @default 'application/json'
+   */
+  contentType?: string;
+}
+
+/**
+ * The method-level metadata written by {@link AsyncApiMessage}.
+ */
+export interface AsyncApiMessageMetadata extends AsyncApiMessageOptions {
+  /** The payload schema source (DTO class or pre-computed JSON Schema). */
+  payload: SchemaSource;
+}
+
+/**
+ * The method-level metadata written by {@link AsyncApiHeaders}.
+ */
+export interface AsyncApiHeadersMetadata {
+  /** The headers schema source (DTO class or pre-computed JSON Schema). */
+  headers: SchemaSource;
+}
+
+/**
+ * Declare the payload of the message an operation sends or receives.
+ *
+ * Apply at method level alongside {@link AsyncApiPub} / {@link AsyncApiSub}. The
+ * payload is either a DTO class — turned into JSON Schema through the same
+ * `@nestjs/swagger` chain that documents HTTP bodies — or a pre-computed
+ * `{ name, schema }` (for example a Zod schema converted with
+ * `zod-to-json-schema`). The generated message is registered once in
+ * `components.messages` and referenced from the channel and operation.
+ *
+ * @param payload The payload DTO class or a pre-computed JSON Schema source.
+ * @param options Message metadata (name, title, summary, description, contentType).
+ */
+export function AsyncApiMessage(
+  payload: SchemaSource,
+  options: AsyncApiMessageOptions = {},
+): MethodDecorator {
+  const metadata: AsyncApiMessageMetadata = { payload, ...options };
+
+  return (target, propertyKey, descriptor) => {
+    Reflect.defineMetadata(
+      ASYNC_API_MESSAGE_METADATA,
+      metadata,
+      descriptor.value as object,
+    );
+    return descriptor;
+  };
+}
+
+/**
+ * Declare the headers of the message an operation sends or receives.
+ *
+ * Apply at method level alongside {@link AsyncApiMessage}. The headers schema is
+ * resolved exactly as the payload is — a DTO class through the `@nestjs/swagger`
+ * chain, or a pre-computed `{ name, schema }`.
+ *
+ * @param headers The headers DTO class or a pre-computed JSON Schema source.
+ */
+export function AsyncApiHeaders(headers: SchemaSource): MethodDecorator {
+  const metadata: AsyncApiHeadersMetadata = { headers };
+
+  return (target, propertyKey, descriptor) => {
+    Reflect.defineMetadata(
+      ASYNC_API_HEADERS_METADATA,
+      metadata,
+      descriptor.value as object,
+    );
+    return descriptor;
+  };
 }

@@ -10,11 +10,11 @@
 > [!WARNING]
 > **Status: under construction.** The module
 > (`AsyncApiModule.forRoot()` / `forRootAsync()`), the channel and operation
-> decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`), and document
-> generation (`getAsyncApiDocument`) exist today. Message and header payloads
-> (`@AsyncApiMessage`, `@AsyncApiHeaders`), transport bindings, the
-> `@AsyncApiServer` decorator, and the hosted docs route land in later
-> milestones. Do not depend on this in production yet.
+> decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`), message and
+> header payloads (`@AsyncApiMessage`, `@AsyncApiHeaders`) with DTO ↔ JSON Schema
+> generation, and document generation (`getAsyncApiDocument`) exist today.
+> Transport bindings, the `@AsyncApiServer` decorator, and the hosted docs route
+> land in later milestones. Do not depend on this in production yet.
 
 ## What This Is
 
@@ -108,6 +108,77 @@ Channel ids are explicit by design — they are never derived from the class nam
 A channel's `address` defaults to its id; pass `address: null` to mark an
 address that is unknown at design time, and operation ids default to the
 decorated method name.
+
+## Message payloads
+
+Attach a payload (and optional headers) to an operation with `@AsyncApiMessage`
+and `@AsyncApiHeaders`. The generated message lands in `components.messages`,
+its schemas in `components.schemas`, and the operation references the channel's
+message — exactly as AsyncAPI 3.0 prescribes. Every generated document passes
+the official [`@asyncapi/parser`](https://www.npmjs.com/package/@asyncapi/parser).
+
+Two validation worlds are supported, mirroring `@nestjs/swagger`'s dual posture:
+
+**class-validator DTOs (default).** Pass a DTO class. The package reuses the
+`@nestjs/swagger` chain to turn it into JSON Schema — no parallel reflector — so
+install `@nestjs/swagger` as a peer when you use this path.
+
+```ts
+import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
+import {
+  AsyncApiChannel,
+  AsyncApiHeaders,
+  AsyncApiMessage,
+  AsyncApiPub,
+} from '@nest-native/asyncapi';
+
+class OrderHeadersDto {
+  @ApiProperty()
+  @IsUUID()
+  traceId!: string;
+}
+
+class OrderPlacedDto {
+  @ApiProperty()
+  @IsUUID()
+  id!: string;
+}
+
+@AsyncApiChannel('orders', { address: 'orders.v1' })
+class OrdersHandler {
+  @AsyncApiPub({ operationId: 'orderPlaced' })
+  @AsyncApiMessage(OrderPlacedDto, { name: 'OrderPlaced' })
+  @AsyncApiHeaders(OrderHeadersDto)
+  publishOrderPlaced(): void {}
+}
+```
+
+**Zod (optional).** Convert a Zod schema to JSON Schema with
+[`zod-to-json-schema`](https://www.npmjs.com/package/zod-to-json-schema) and pass
+it as a `{ name, schema }` source. The generator registers the schema verbatim
+and never reflects over Zod, so any Zod-to-JSON-Schema converter works.
+
+```ts
+import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { AsyncApiMessage } from '@nest-native/asyncapi';
+
+const OrderShipped = z.object({ orderId: z.string().uuid() });
+
+class ShipmentsHandler {
+  @AsyncApiSub({ operationId: 'onOrderShipped' })
+  @AsyncApiMessage({
+    name: 'OrderShipped',
+    schema: zodToJsonSchema(OrderShipped, { $refStrategy: 'none' }),
+  })
+  handleOrderShipped(): void {}
+}
+```
+
+The message name defaults to the DTO class name (or the schema source `name`),
+the content type defaults to `application/json`, and a payload DTO shared across
+messages is emitted once under its class name.
 
 ## Links
 
