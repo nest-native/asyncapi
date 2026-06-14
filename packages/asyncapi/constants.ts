@@ -20,6 +20,18 @@ export const ASYNC_API_CHANNEL_METADATA = 'asyncapi:channel';
 export const ASYNC_API_OPERATION_METADATA = 'asyncapi:operation';
 
 /**
+ * Method-level metadata key holding the message payload metadata written by
+ * {@link AsyncApiMessage}.
+ */
+export const ASYNC_API_MESSAGE_METADATA = 'asyncapi:message';
+
+/**
+ * Method-level metadata key holding the message headers metadata written by
+ * {@link AsyncApiHeaders}.
+ */
+export const ASYNC_API_HEADERS_METADATA = 'asyncapi:headers';
+
+/**
  * AsyncAPI 3.0 operation actions.
  *
  * In AsyncAPI 3.0 an operation declares its direction with `action`: an
