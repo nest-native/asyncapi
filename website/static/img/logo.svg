@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="@nest-native/asyncapi">
+  <rect width="200" height="200" rx="24" fill="#6d28d9"/>
+  <path d="M44 132c14-44 26-66 36-66s14 16 16 36 6 36 16 36 22-22 36-66" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="44" cy="132" r="9" fill="#ffffff"/>
+  <circle cx="156" cy="72" r="9" fill="#ffffff"/>
+</svg>
