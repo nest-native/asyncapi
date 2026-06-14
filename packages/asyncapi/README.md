@@ -8,12 +8,13 @@
 </p>
 
 > [!WARNING]
-> **Status: scaffold / under construction.** This is the `v0.0.1-scaffold`
-> bootstrap. Only `AsyncApiModule.forRoot()` / `AsyncApiModule.forRootAsync()`
-> exist today. The AsyncAPI decorators (`@AsyncApiChannel`, `@AsyncApiPub`,
-> `@AsyncApiSub`, `@AsyncApiMessage`, `@AsyncApiHeaders`, `@AsyncApiServer`) and
-> the document generator land in later milestones. Do not depend on this in
-> production yet.
+> **Status: under construction.** The module
+> (`AsyncApiModule.forRoot()` / `forRootAsync()`), the channel and operation
+> decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`), and document
+> generation (`getAsyncApiDocument`) exist today. Message and header payloads
+> (`@AsyncApiMessage`, `@AsyncApiHeaders`), transport bindings, the
+> `@AsyncApiServer` decorator, and the hosted docs route land in later
+> milestones. Do not depend on this in production yet.
 
 ## What This Is
 
@@ -54,11 +55,31 @@ Required peers:
 npm i @nestjs/common @nestjs/core reflect-metadata rxjs
 ```
 
-## Usage (scaffold)
+## Usage
+
+Register the module, then declare channels and operations with decorators.
+`@AsyncApiChannel` is the class-level counterpart to `@Controller('path')`, and
+`@AsyncApiPub` / `@AsyncApiSub` are the method-level counterparts to the HTTP
+verb decorators. `@AsyncApiPub` produces an AsyncAPI 3.0 `send` operation and
+`@AsyncApiSub` produces a `receive` operation.
 
 ```ts
 import { Module } from '@nestjs/common';
-import { AsyncApiModule } from '@nest-native/asyncapi';
+import {
+  AsyncApiModule,
+  AsyncApiChannel,
+  AsyncApiPub,
+  AsyncApiSub,
+} from '@nest-native/asyncapi';
+
+@AsyncApiChannel('orders', { address: 'orders.v1', title: 'Orders' })
+class OrdersHandler {
+  @AsyncApiPub({ operationId: 'orderPlaced' })
+  publishOrderPlaced(): void {}
+
+  @AsyncApiSub({ operationId: 'onOrderShipped' })
+  handleOrderShipped(): void {}
+}
 
 @Module({
   imports: [
@@ -66,9 +87,27 @@ import { AsyncApiModule } from '@nest-native/asyncapi';
       defaultInfo: { title: 'Orders Service', version: '1.0.0' },
     }),
   ],
+  controllers: [OrdersHandler],
 })
 export class AppModule {}
 ```
+
+Generate the document from a running application — the AsyncAPI counterpart to
+`SwaggerModule.createDocument`:
+
+```ts
+import { getAsyncApiDocument } from '@nest-native/asyncapi';
+
+const document = getAsyncApiDocument(app, {
+  title: 'Orders Service',
+  version: '1.0.0',
+});
+```
+
+Channel ids are explicit by design — they are never derived from the class name.
+A channel's `address` defaults to its id; pass `address: null` to mark an
+address that is unknown at design time, and operation ids default to the
+decorated method name.
 
 ## Links
 

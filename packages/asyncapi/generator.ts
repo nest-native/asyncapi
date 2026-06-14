@@ -1,9 +1,19 @@
-import { INestApplicationContext } from '@nestjs/common';
+import { INestApplicationContext, Type } from '@nestjs/common';
 import { MetadataScanner, ModulesContainer } from '@nestjs/core';
 import {
+  ASYNC_API_CHANNEL_METADATA,
+  ASYNC_API_OPERATION_METADATA,
+} from './constants';
+import {
+  AsyncApiChannelMetadata,
+  AsyncApiOperationMetadata,
+} from './decorators';
+import {
   ASYNC_API_VERSION,
+  AsyncApiChannelObject,
   AsyncApiDocument,
   AsyncApiInfo,
+  AsyncApiOperationObject,
 } from './document';
 import { AsyncApiDocumentConfig } from './interfaces';
 import { AsyncApiDocumentScanner, ScannedHandler } from './scanner';
@@ -47,26 +57,171 @@ function buildInfo(config: AsyncApiDocumentConfig): AsyncApiInfo {
 }
 
 /**
+ * Read the {@link AsyncApiChannelMetadata} a {@link AsyncApiChannel} decorator
+ * left on a handler class, or `undefined` when the class is not a channel.
+ */
+function readChannelMetadata(
+  metatype: Type,
+): AsyncApiChannelMetadata | undefined {
+  return Reflect.getMetadata(ASYNC_API_CHANNEL_METADATA, metatype) as
+    | AsyncApiChannelMetadata
+    | undefined;
+}
+
+/**
+ * Read the {@link AsyncApiOperationMetadata} a {@link AsyncApiPub} /
+ * {@link AsyncApiSub} decorator left on a prototype method, or `undefined` when
+ * the method is not an operation.
+ */
+function readOperationMetadata(
+  prototype: object,
+  methodName: string,
+): AsyncApiOperationMetadata | undefined {
+  const method = (prototype as Record<string, unknown>)[methodName];
+
+  if (typeof method !== 'function') {
+    return undefined;
+  }
+
+  return Reflect.getMetadata(ASYNC_API_OPERATION_METADATA, method) as
+    | AsyncApiOperationMetadata
+    | undefined;
+}
+
+/**
+ * Build a Channel Object from its metadata, defaulting the address to the
+ * channel id and copying through only the optional fields that were provided.
+ */
+function buildChannel(
+  metadata: AsyncApiChannelMetadata,
+): AsyncApiChannelObject {
+  const channel: AsyncApiChannelObject = {
+    address: metadata.address === undefined ? metadata.id : metadata.address,
+  };
+
+  if (metadata.title !== undefined) {
+    channel.title = metadata.title;
+  }
+  if (metadata.summary !== undefined) {
+    channel.summary = metadata.summary;
+  }
+  if (metadata.description !== undefined) {
+    channel.description = metadata.description;
+  }
+
+  return channel;
+}
+
+/**
+ * Build an Operation Object from its metadata, referencing the supplied channel
+ * id and copying through only the optional fields that were provided.
+ */
+function buildOperation(
+  metadata: AsyncApiOperationMetadata,
+  channelId: string,
+): AsyncApiOperationObject {
+  const operation: AsyncApiOperationObject = {
+    action: metadata.action,
+    channel: { $ref: `#/channels/${channelId}` },
+  };
+
+  if (metadata.title !== undefined) {
+    operation.title = metadata.title;
+  }
+  if (metadata.summary !== undefined) {
+    operation.summary = metadata.summary;
+  }
+  if (metadata.description !== undefined) {
+    operation.description = metadata.description;
+  }
+
+  return operation;
+}
+
+/**
+ * The mutable document body that {@link collectHandler} appends channels and
+ * operations to as it visits each decorated handler.
+ */
+interface DocumentBody {
+  channels: Record<string, AsyncApiChannelObject>;
+  operations: Record<string, AsyncApiOperationObject>;
+}
+
+/**
+ * Read every operation off one channel handler and register it on the body,
+ * raising on a duplicate operation id so collisions surface as build failures
+ * rather than silently dropped operations.
+ */
+function collectOperations(
+  body: DocumentBody,
+  handler: ScannedHandler,
+  channelId: string,
+): void {
+  const prototype = handler.metatype.prototype as object;
+
+  for (const methodName of handler.methodNames) {
+    const operationMeta = readOperationMetadata(prototype, methodName);
+    if (operationMeta === undefined) {
+      continue;
+    }
+
+    const operationId = operationMeta.operationId ?? methodName;
+    if (operationId in body.operations) {
+      throw new Error(
+        `Duplicate AsyncAPI operation id "${operationId}" produced by ${handler.metatype.name}.${methodName}.`,
+      );
+    }
+
+    body.operations[operationId] = buildOperation(operationMeta, channelId);
+  }
+}
+
+/**
+ * Register one scanned handler's channel and operations on the body. Handlers
+ * without an {@link AsyncApiChannel} decorator are skipped, and a duplicate
+ * channel id is treated as a build failure.
+ */
+function collectHandler(body: DocumentBody, handler: ScannedHandler): void {
+  const channelMeta = readChannelMetadata(handler.metatype);
+  if (channelMeta === undefined) {
+    return;
+  }
+
+  if (channelMeta.id in body.channels) {
+    throw new Error(
+      `Duplicate AsyncAPI channel id "${channelMeta.id}" produced by ${handler.metatype.name}.`,
+    );
+  }
+
+  body.channels[channelMeta.id] = buildChannel(channelMeta);
+  collectOperations(body, handler, channelMeta.id);
+}
+
+/**
  * Assemble an AsyncAPI 3.0 document from a document config and the handlers
  * discovered while walking NestJS metadata.
  *
- * At this skeleton milestone no AsyncAPI decorators exist, so the discovered
- * handlers contribute no channels or operations and the document is emitted
- * with empty `channels`, `operations`, and `components`. This is a valid
- * AsyncAPI 3.0 document. Later milestones populate these sections from the
- * decorator metadata read off the same {@link ScannedHandler} list.
+ * Each handler decorated with {@link AsyncApiChannel} contributes one channel,
+ * and each of its {@link AsyncApiPub} / {@link AsyncApiSub} methods contributes
+ * one operation that references that channel. Handlers without AsyncAPI
+ * decorators contribute nothing, so a fully undecorated application still emits
+ * a valid (empty) AsyncAPI 3.0 document.
  */
 export function buildAsyncApiDocument(
   config: AsyncApiDocumentConfig,
   handlers: ScannedHandler[],
 ): AsyncApiDocument {
-  void handlers;
+  const body: DocumentBody = { channels: {}, operations: {} };
+
+  for (const handler of handlers) {
+    collectHandler(body, handler);
+  }
 
   return {
     asyncapi: ASYNC_API_VERSION,
     info: buildInfo(config),
-    channels: {},
-    operations: {},
+    channels: body.channels,
+    operations: body.operations,
     components: {},
   };
 }
