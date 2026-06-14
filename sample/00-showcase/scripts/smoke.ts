@@ -1,7 +1,10 @@
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
+import { AddressInfo } from 'node:net';
 import { Parser } from '@asyncapi/parser';
+import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { AsyncApiModule } from '@nest-native/asyncapi';
 import { AppModule } from '../src/app.module';
 import { createAsyncApiDocument } from '../src/asyncapi';
 
@@ -20,7 +23,6 @@ async function smoke(): Promise<void> {
     abortOnError: false,
     logger: false,
   });
-  await app.init();
 
   try {
     const document = createAsyncApiDocument(app);
@@ -31,9 +33,46 @@ async function smoke(): Promise<void> {
     assertComponents(document);
     assertTransportBindings(document);
     await assertValidatesWithParser(document);
+    // Wiring the docs route before app.listen() mirrors SwaggerModule.setup:
+    // the routes must be registered before the HTTP server finalizes routing.
+    await assertDocsRoute(app, document);
   } finally {
     await app.close();
   }
+}
+
+async function assertDocsRoute(
+  app: INestApplication,
+  document: ShowcaseDocument,
+): Promise<void> {
+  const routes = AsyncApiModule.setup('async-docs', app, document, {
+    title: 'Orders Service — AsyncAPI',
+  });
+  assert.deepEqual(routes, {
+    uiUrl: '/async-docs',
+    jsonUrl: '/async-docs-json',
+    yamlUrl: '/async-docs-yaml',
+  });
+
+  await app.listen(0);
+  const server = app.getHttpServer() as { address(): AddressInfo | string | null };
+  const address = server.address();
+  assert.ok(address && typeof address === 'object', 'the server bound a port');
+  const origin = `http://127.0.0.1:${address.port}`;
+
+  const page = await fetch(`${origin}${routes.uiUrl}`);
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get('content-type') ?? '', /text\/html/);
+  assert.match(await page.text(), /AsyncApiStandalone\.render\(/);
+
+  const yaml = await fetch(`${origin}${routes.yamlUrl}`);
+  assert.match(yaml.headers.get('content-type') ?? '', /application\/yaml/);
+  const { diagnostics } = await parser.parse(await yaml.text());
+  assert.deepEqual(
+    diagnostics.filter((diagnostic) => diagnostic.severity === 0),
+    [],
+    'the YAML served by the docs route must pass @asyncapi/parser validation',
+  );
 }
 
 function assertDocumentShape(document: ShowcaseDocument): void {

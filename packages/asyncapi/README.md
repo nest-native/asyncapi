@@ -12,11 +12,11 @@
 > (`AsyncApiModule.forRoot()` / `forRootAsync()`), the channel and operation
 > decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`), message and
 > header payloads (`@AsyncApiMessage`, `@AsyncApiHeaders`) with DTO ↔ JSON Schema
-> generation, document generation (`getAsyncApiDocument`), and transport bindings
+> generation, document generation (`getAsyncApiDocument`), transport bindings
 > for Kafka, NATS, MQTT, and AMQP (`@AsyncApiServer`,
 > `@AsyncApiChannelBindings`, `@AsyncApiOperationBindings`,
-> `@AsyncApiMessageBindings`) exist today. The hosted docs route lands in a later
-> milestone. Do not depend on this in production yet.
+> `@AsyncApiMessageBindings`), and the hosted docs route with viewer
+> (`AsyncApiModule.setup`) exist today. Do not depend on this in production yet.
 
 ## What This Is
 
@@ -225,6 +225,61 @@ The binding maps are typed for the four v1 protocols but stay open, so any other
 protocol's spec-compliant binding can be attached verbatim. Bindings are emitted
 unchanged, so the official `@asyncapi/parser` remains the source of truth for
 what is valid.
+
+## Docs route with viewer
+
+`AsyncApiModule.setup` is the AsyncAPI counterpart to `SwaggerModule.setup`: it
+serves the generated document and a live viewer over your application's existing
+HTTP server. It mounts three GET routes — the viewer page at `path`, the raw JSON
+at `${path}-json`, and the raw YAML at `${path}-yaml` (YAML is the canonical
+AsyncAPI interchange format; JSON is offered alongside it).
+
+```ts
+import { NestFactory } from '@nestjs/core';
+import { AsyncApiModule, getAsyncApiDocument } from '@nest-native/asyncapi';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const document = getAsyncApiDocument(app, {
+    title: 'Orders Service',
+    version: '1.0.0',
+  });
+  AsyncApiModule.setup('async-docs', app, document);
+
+  await app.listen(3000);
+  // Viewer: http://localhost:3000/async-docs
+  // JSON:   http://localhost:3000/async-docs-json
+  // YAML:   http://localhost:3000/async-docs-yaml
+}
+```
+
+Call `setup` before `app.listen()` (the same ordering `SwaggerModule.setup`
+requires) so the routes attach before the HTTP server finalizes its routing. It
+is adapter-agnostic — it works on `@nestjs/platform-express` and
+`@nestjs/platform-fastify` alike.
+
+The viewer page renders with the official
+[`@asyncapi/react-component`](https://www.npmjs.com/package/@asyncapi/react-component)
+standalone bundle, loaded from a CDN by default so the package ships no viewer
+runtime dependency. The spec is embedded inline in the page, so it renders
+without a second request. For air-gapped deployments, self-host the assets and
+point `scriptUrl` / `stylesUrl` at them; customize the page heading with `title`,
+and the spec routes with `jsonDocumentUrl` / `yamlDocumentUrl`.
+
+```ts
+AsyncApiModule.setup('async-docs', app, document, {
+  title: 'Orders Service — AsyncAPI',
+  scriptUrl: '/assets/asyncapi/standalone.js',
+  stylesUrl: '/assets/asyncapi/styles.css',
+});
+```
+
+> **Security.** The generated spec is served unauthenticated by default and may
+> reveal channel, schema, and server detail you do not want public. Put the docs
+> routes behind your application's existing auth (a guard or a reverse proxy) when
+> the document is sensitive, and never place secrets in example payloads.
 
 ## Links
 
