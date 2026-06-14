@@ -265,3 +265,19 @@ jobs:
           | `05-migration-nestjs-asyncapi` | The `nestjs-asyncapi` 2.x felines sample ported to AsyncAPI 3.0: channel/operation split, `@EventPattern` coexistence, slash channel ids, and polymorphic payloads | Boots the app, asserts the migration is faithful, and validates the document with `@asyncapi/parser` |
           EOF
           sed -i "s/DURATION_PLACEHOLDER/${DURATION_SECONDS}s (${DURATION_MS}ms)/" "$GITHUB_STEP_SUMMARY"
+
+  docs-site:
+    name: Docusaurus build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install docs website dependencies
+        run: npm --prefix website ci
+
+      - name: Build docs site
+        run: npm --prefix website run build
