@@ -297,6 +297,40 @@ describe('buildAsyncApiDocument message integration', () => {
     assert.ok(document.components.schemas?.OrderHeaders);
   });
 
+  it('escapes slashes in a channel id when building operation and message refs', () => {
+    class Event {
+      @ApiProperty()
+      id!: string;
+    }
+
+    // Microservice channel ids mirror @EventPattern strings such as
+    // `ms/create/feline`, which contain `/`; the generated $refs must escape
+    // each pointer segment per RFC 6901 (`/` -> `~1`) so they resolve.
+    @AsyncApiChannel('ms/create/feline', { address: 'ms/create/feline' })
+    class FelinesChannel {
+      @AsyncApiPub({ operationId: 'publishCreate' })
+      @AsyncApiMessage(Event, { name: 'FelineEvent' })
+      publishCreate(): void {}
+    }
+
+    const document = buildAsyncApiDocument({}, [
+      { metatype: FelinesChannel, methodNames: ['publishCreate'] },
+    ]);
+
+    assert.deepEqual(document.operations.publishCreate.channel, {
+      $ref: '#/channels/ms~1create~1feline',
+    });
+    assert.deepEqual(document.operations.publishCreate.messages, [
+      { $ref: '#/channels/ms~1create~1feline/messages/FelineEvent' },
+    ]);
+    // The channel-local message key and the components message key are not
+    // pointer-escaped because they are object keys, not pointer segments; only
+    // the references into them are escaped.
+    assert.deepEqual(document.channels['ms/create/feline'].messages, {
+      FelineEvent: { $ref: '#/components/messages/FelineEvent' },
+    });
+  });
+
   it('copies through every supplied message field and a custom content type', () => {
     class Event {
       @ApiProperty()

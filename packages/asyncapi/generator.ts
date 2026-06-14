@@ -32,6 +32,7 @@ import {
   AsyncApiServerObject,
 } from './document';
 import { AsyncApiDocumentConfig } from './interfaces';
+import { buildRef } from './references';
 import { AsyncApiDocumentScanner, ScannedHandler } from './scanner';
 import { AsyncApiSchemaRegistry, SchemaSource } from './schema';
 
@@ -224,7 +225,7 @@ function buildOperation(
 ): AsyncApiOperationObject {
   const operation: AsyncApiOperationObject = {
     action: metadata.action,
-    channel: { $ref: `#/channels/${channelId}` },
+    channel: { $ref: buildRef('#/channels', channelId) },
   };
 
   if (metadata.title !== undefined) {
@@ -355,7 +356,12 @@ function collectMessage(
 
   registerMessage(body, context, messageName, message);
 
-  return `#/channels/${context.channelId}/messages/${messageName}`;
+  return buildRef(
+    '#/channels',
+    context.channelId,
+    'messages',
+    messageName,
+  );
 }
 
 /**
@@ -380,7 +386,9 @@ function registerMessage(
 
   const channel = body.channels[context.channelId];
   channel.messages ??= {};
-  channel.messages[messageName] = { $ref: `#/components/messages/${messageName}` };
+  channel.messages[messageName] = {
+    $ref: buildRef('#/components/messages', messageName),
+  };
 }
 
 /**
