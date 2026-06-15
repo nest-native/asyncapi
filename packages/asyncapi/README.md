@@ -8,17 +8,20 @@
 </p>
 
 > [!NOTE]
-> **Status: v0.1.x — stable, v1 surface complete.** The full public API has
-> landed: the module (`AsyncApiModule.forRoot()` / `forRootAsync()`), the channel
-> and operation decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`),
-> message and header payloads (`@AsyncApiMessage`, `@AsyncApiHeaders`) with
-> DTO ↔ JSON Schema generation, document generation (`getAsyncApiDocument`),
-> typed transport bindings for Kafka, NATS, MQTT, and AMQP (`@AsyncApiServer`,
-> `@AsyncApiChannelBindings`, `@AsyncApiOperationBindings`,
-> `@AsyncApiMessageBindings`), and the hosted docs route with viewer
-> (`AsyncApiModule.setup`). Every generated document passes the official
-> `@asyncapi/parser`. As a 0.x release the public API may still evolve; pin a
-> version and read the [CHANGELOG](../../CHANGELOG.md).
+> **Status: `0.1.1` (`0.x`).** Functional and fully tested (100% coverage), and
+> usable today — but the public API may still change before `1.0`. The public
+> API covers: the module (`AsyncApiModule.forRoot()` / `forRootAsync()`), the
+> channel and operation decorators (`@AsyncApiChannel`, `@AsyncApiPub`,
+> `@AsyncApiSub`), message and header payloads (`@AsyncApiMessage`,
+> `@AsyncApiHeaders`) with DTO ↔ JSON Schema generation, document generation
+> (`getAsyncApiDocument`), typed transport bindings for Kafka, NATS, MQTT, and
+> AMQP (`@AsyncApiServer`, `@AsyncApiChannelBindings`,
+> `@AsyncApiOperationBindings`, `@AsyncApiMessageBindings`), and the hosted docs
+> route with viewer (`AsyncApiModule.setup`). Every generated document passes the
+> official `@asyncapi/parser`. Per semver, `0.x` minor releases can include
+> breaking changes, so pin a version — see the
+> [support policy](https://github.com/nest-native/asyncapi/blob/main/website/docs/support-policy.md)
+> and the [CHANGELOG](../../CHANGELOG.md).
 
 ## What This Is
 
