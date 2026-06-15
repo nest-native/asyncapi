@@ -263,6 +263,7 @@ jobs:
           | `03-transport-bindings` | `@AsyncApiServer` and Kafka, NATS, MQTT, and AMQP bindings across servers, channels, operations, and messages | Boots the app and validates the document with `@asyncapi/parser` |
           | `04-docs-route` | `AsyncApiModule.setup` serving the viewer page and the JSON/YAML spec routes | Boots the app over HTTP and validates the served JSON and YAML with `@asyncapi/parser` |
           | `05-migration-nestjs-asyncapi` | The `nestjs-asyncapi` 2.x felines sample ported to AsyncAPI 3.0: channel/operation split, `@EventPattern` coexistence, slash channel ids, and polymorphic payloads | Boots the app, asserts the migration is faithful, and validates the document with `@asyncapi/parser` |
+          | `06-forrootasync-config` | `AsyncApiModule.forRootAsync` resolving the document defaults from an injected `ConfigService` | Boots the app, asserts the async config seeded the document, and validates it with `@asyncapi/parser` |
           EOF
           sed -i "s/DURATION_PLACEHOLDER/${DURATION_SECONDS}s (${DURATION_MS}ms)/" "$GITHUB_STEP_SUMMARY"
 

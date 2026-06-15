@@ -7,20 +7,22 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Package License" /></a>
 </p>
 
-> [!WARNING]
-> **Status: under construction.** The module
-> (`AsyncApiModule.forRoot()` / `forRootAsync()`), the channel and operation
-> decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`), message and
-> header payloads (`@AsyncApiMessage`, `@AsyncApiHeaders`) with DTO ↔ JSON Schema
-> generation, document generation (`getAsyncApiDocument`), transport bindings
-> for Kafka, NATS, MQTT, and AMQP (`@AsyncApiServer`,
+> [!NOTE]
+> **Status: v0.1.x — stable, v1 surface complete.** The full public API has
+> landed: the module (`AsyncApiModule.forRoot()` / `forRootAsync()`), the channel
+> and operation decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`),
+> message and header payloads (`@AsyncApiMessage`, `@AsyncApiHeaders`) with
+> DTO ↔ JSON Schema generation, document generation (`getAsyncApiDocument`),
+> typed transport bindings for Kafka, NATS, MQTT, and AMQP (`@AsyncApiServer`,
 > `@AsyncApiChannelBindings`, `@AsyncApiOperationBindings`,
 > `@AsyncApiMessageBindings`), and the hosted docs route with viewer
-> (`AsyncApiModule.setup`) exist today. Do not depend on this in production yet.
+> (`AsyncApiModule.setup`). Every generated document passes the official
+> `@asyncapi/parser`. As a 0.x release the public API may still evolve; pin a
+> version and read the [CHANGELOG](../../CHANGELOG.md).
 
 ## What This Is
 
-`@nest-native/asyncapi` is a community NestJS integration that will make
+`@nest-native/asyncapi` is a community NestJS integration that makes
 AsyncAPI 3.0 documentation feel like a first-class Nest primitive — the
 event/message counterpart to `@nestjs/swagger`. You decorate your
 `@nestjs/microservices` handlers and message DTOs, and the package generates a

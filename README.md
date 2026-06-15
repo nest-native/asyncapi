@@ -6,11 +6,11 @@
   <a href="https://www.npmjs.com/package/@nest-native/asyncapi"><img src="https://img.shields.io/npm/v/@nest-native/asyncapi.svg" alt="NPM Version" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Package License" /></a>
   <img src="https://img.shields.io/badge/coverage-100%25-brightgreen.svg" alt="Test Coverage" />
-  <img src="https://img.shields.io/badge/status-0.1.0-blue.svg" alt="Status: 0.1.0" />
+  <img src="https://img.shields.io/badge/status-0.1.x-blue.svg" alt="Status: 0.1.x" />
 </p>
 
 > [!NOTE]
-> **Status: v0.1.0.** The first public release is here. The full decorator set
+> **Status: v0.1.x — stable, v1 surface complete.** The full decorator set
 > (`@AsyncApiChannel`, `@AsyncApiPub` / `@AsyncApiSub`, `@AsyncApiMessage`,
 > `@AsyncApiHeaders`, `@AsyncApiServer`), `getAsyncApiDocument()`, the docs route
 > with the AsyncAPI viewer, typed Kafka/NATS/MQTT/AMQP bindings, the

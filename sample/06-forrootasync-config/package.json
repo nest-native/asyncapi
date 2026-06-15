@@ -1,8 +1,8 @@
 {
-  "name": "nest-native-asyncapi-sample-04-docs-route",
+  "name": "nest-native-asyncapi-sample-06-forrootasync-config",
   "version": "0.0.0",
   "private": true,
-  "description": "Sample 04 - docs route serving the AsyncAPI viewer with JSON and YAML",
+  "description": "Sample 06 - AsyncApiModule.forRootAsync resolving config from a provider",
   "license": "MIT",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

@@ -4,11 +4,10 @@ The growing integration baseline for `@nest-native/asyncapi`. It keeps AsyncAPI
 3.0 semantics explicit while showing the Nest-native structure users expect in a
 real event-driven application.
 
-This sample grows milestone by milestone. At this milestone it demonstrates the
-channel and operation decorators plus message payloads from both validation
-worlds, and transport bindings (Kafka on the orders channel, NATS on the
-shipments channel), producing a valid AsyncAPI 3.0 document validated by
-`@asyncapi/parser`.
+It demonstrates the channel and operation decorators plus message payloads from
+both validation worlds, and transport bindings (Kafka on the orders channel,
+NATS on the shipments channel), producing a valid AsyncAPI 3.0 document
+validated by `@asyncapi/parser`.
 
 ## What It Demonstrates
 
@@ -29,9 +28,9 @@ shipments channel), producing a valid AsyncAPI 3.0 document validated by
   `SwaggerModule.createDocument`
 - The generated document passing official `@asyncapi/parser` validation
 
-The hosted docs route with a live viewer lands in a later milestone and will be
-folded into this same showcase. Sample `03-transport-bindings` covers all four
-v1 transports (Kafka, NATS, MQTT, AMQP) across every binding scope.
+Sample `04-docs-route` covers the hosted docs route with a live viewer via
+`AsyncApiModule.setup`, and sample `03-transport-bindings` covers all four v1
+transports (Kafka, NATS, MQTT, AMQP) across every binding scope.
 
 ## Commands
 

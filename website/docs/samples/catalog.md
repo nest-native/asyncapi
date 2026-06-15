@@ -19,6 +19,7 @@ npm run sample:focused
 | [`03-transport-bindings`](https://github.com/nest-native/asyncapi/tree/main/sample/03-transport-bindings) | `@AsyncApiServer` plus Kafka, NATS, MQTT, and AMQP bindings across every scope | `npm run test --workspace nest-native-asyncapi-sample-03-transport-bindings` |
 | [`04-docs-route`](https://github.com/nest-native/asyncapi/tree/main/sample/04-docs-route) | `AsyncApiModule.setup` serving the viewer and the JSON/YAML spec routes | `npm run test --workspace nest-native-asyncapi-sample-04-docs-route` |
 | [`05-migration-nestjs-asyncapi`](https://github.com/nest-native/asyncapi/tree/main/sample/05-migration-nestjs-asyncapi) | The `nestjs-asyncapi` 2.x felines sample ported to AsyncAPI 3.0 | `npm run test --workspace nest-native-asyncapi-sample-05-migration-nestjs-asyncapi` |
+| [`06-forrootasync-config`](https://github.com/nest-native/asyncapi/tree/main/sample/06-forrootasync-config) | `AsyncApiModule.forRootAsync` resolving the document defaults from an injected `ConfigService` | `npm run test --workspace nest-native-asyncapi-sample-06-forrootasync-config` |
 
 ## What The Showcase Proves
 
@@ -44,3 +45,6 @@ need:
   matching [Docs Route](../docs-route.md).
 - **Migration** — `05` is the validated port behind the
   [Migration](../migration.md) guide.
+- **Async configuration** — `06` registers the module with
+  `AsyncApiModule.forRootAsync`, resolving the document defaults from an injected
+  `ConfigService` before generating the document.
