@@ -4,12 +4,14 @@ Thanks for helping improve `@nest-native/asyncapi`.
 
 ## Project Status
 
-This package is at its bootstrap milestone (`v0.0.1-scaffold`). The public
+This package is at `v0.1.x` — stable, with the v1 surface complete. The public
 AsyncAPI decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`,
-`@AsyncApiMessage`, `@AsyncApiHeaders`, `@AsyncApiServer`), the document
-generator, and the sample catalog land in later milestones. Until then,
-contributions focus on the workspace skeleton, the `AsyncApiModule` shell, CI,
-and project documentation.
+`@AsyncApiMessage`, `@AsyncApiHeaders`, `@AsyncApiServer`) and binding
+decorators, the `getAsyncApiDocument()` generator, the docs route with viewer,
+the `nestjs-asyncapi` migration guide, and the sample catalog have all landed.
+Contributions now focus on hardening the public API, expanding the samples and
+docs, and keeping every generated document valid against `@asyncapi/parser`. As
+a 0.x release the public API may still evolve.
 
 ## Sample Work Must Stay Separate From Library Fixes
 

@@ -1,11 +1,11 @@
 /**
  * Minimal type model for an AsyncAPI 3.0 document.
  *
- * These interfaces describe only the slice of the AsyncAPI 3.0 specification
- * that the generator emits today. The spec is large; we grow this model as
- * later milestones add channels, operations, messages, schemas, servers, and
- * transport bindings. We never invent non-standard fields — every property
- * here maps directly to an AsyncAPI 3.0 spec primitive.
+ * These interfaces describe the slice of the AsyncAPI 3.0 specification that the
+ * generator emits — channels, operations, messages, schemas, servers, and
+ * transport bindings. The spec is large; we model only what the generator
+ * produces and never invent non-standard fields — every property here maps
+ * directly to an AsyncAPI 3.0 spec primitive.
  *
  * @see https://www.asyncapi.com/docs/reference/specification/v3.0.0
  */
@@ -232,15 +232,15 @@ export interface AsyncApiOperationObject {
 /**
  * The reusable definitions container of an AsyncAPI 3.0 document. `messages`
  * and `schemas` are populated from `@AsyncApiMessage` / `@AsyncApiHeaders`
- * metadata; further sub-sections (servers, bindings) are added by later
- * milestones.
+ * metadata; the open index signature leaves room for any other spec-defined
+ * `components` sub-section.
  */
 export interface AsyncApiComponents {
   /** Reusable Message Objects referenced by channels, keyed by message name. */
   messages?: Record<string, AsyncApiMessageObject>;
   /** Reusable JSON Schemas referenced by messages, keyed by schema name. */
   schemas?: Record<string, AsyncApiSchemaObject>;
-  /** Other components sub-sections introduced by later milestones. */
+  /** Any other spec-defined `components` sub-section. */
   [section: string]:
     | Record<string, AsyncApiMessageObject>
     | Record<string, AsyncApiSchemaObject>

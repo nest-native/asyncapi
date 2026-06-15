@@ -4,10 +4,11 @@ import { AsyncApiContact, AsyncApiLicense } from './document';
 /**
  * Configuration for {@link AsyncApiModule.forRoot}.
  *
- * At this scaffold milestone the module only wires global configuration; the
+ * Carries the global AsyncAPI configuration registered on the root module. The
  * AsyncAPI decorators (`@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`,
- * `@AsyncApiMessage`, `@AsyncApiHeaders`, `@AsyncApiServer`) and the document
- * generator land in later milestones and will read from these options.
+ * `@AsyncApiMessage`, `@AsyncApiHeaders`, `@AsyncApiServer`) annotate handlers
+ * and DTOs, and the document generator ({@link getAsyncApiDocument}) reads these
+ * options when producing a document.
  */
 export interface AsyncApiModuleOptions {
   /**

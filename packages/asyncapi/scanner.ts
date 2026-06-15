@@ -5,10 +5,10 @@ import { MetadataScanner, ModulesContainer } from '@nestjs/core';
  * A single class discovered while walking NestJS metadata, paired with the
  * method names that are candidate message handlers.
  *
- * Later milestones read the `@AsyncApiChannel` / `@AsyncApiPub` / `@AsyncApiSub`
+ * The generator reads the `@AsyncApiChannel` / `@AsyncApiPub` / `@AsyncApiSub`
  * decorator metadata off these classes and methods to populate channels and
- * operations. At this skeleton milestone the scanner only proves it can reach
- * every handler the same way `@nestjs/swagger` reaches every `@Controller`.
+ * operations, reaching every handler the same way `@nestjs/swagger` reaches
+ * every `@Controller`.
  */
 export interface ScannedHandler {
   /** The class (metatype) of the discovered provider or controller. */
@@ -25,7 +25,7 @@ export interface ScannedHandler {
  * `ModulesContainer` populated by Nest at bootstrap and visits every provider
  * and controller in every module, then enumerates each instance's prototype
  * methods with the {@link MetadataScanner}. The discovery is decorator-driven
- * downstream, so this same walk powers every later milestone unchanged.
+ * downstream, so this same walk powers the whole generator unchanged.
  */
 export class AsyncApiDocumentScanner {
   constructor(

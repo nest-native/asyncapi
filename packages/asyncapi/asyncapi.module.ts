@@ -15,19 +15,20 @@ import {
  * Injection token for the resolved {@link AsyncApiModuleOptions}.
  *
  * Consumers that need the global AsyncAPI configuration can inject this token.
- * The AsyncAPI decorators and document generator added in later milestones
- * resolve their defaults from the same provider.
+ * The document generator ({@link getAsyncApiDocument}) reads its defaults from
+ * the same provider.
  */
 export const ASYNC_API_MODULE_OPTIONS = Symbol('ASYNC_API_MODULE_OPTIONS');
 
 /**
  * Root module for `@nest-native/asyncapi`.
  *
- * At this scaffold milestone the module only registers global configuration so
- * applications can wire it into their root module. The `@AsyncApiChannel`,
- * `@AsyncApiPub`, `@AsyncApiSub`, `@AsyncApiMessage`, `@AsyncApiHeaders`, and
- * `@AsyncApiServer` decorators and the document generator arrive in later
- * milestones and build on this same module shell.
+ * Register it once in the application's root module to provide the global
+ * AsyncAPI configuration that {@link getAsyncApiDocument} reads when generating
+ * a document. The `@AsyncApiChannel`, `@AsyncApiPub`, `@AsyncApiSub`,
+ * `@AsyncApiMessage`, `@AsyncApiHeaders`, and `@AsyncApiServer` decorators
+ * annotate handlers and DTOs independently of this module; {@link setup} then
+ * serves the generated document and its viewer over the running HTTP server.
  */
 @Module({})
 export class AsyncApiModule {

@@ -6,6 +6,29 @@ This project follows semantic versioning for the published package. Sample,
 documentation, and CI-only changes may remain in `Unreleased` until the next
 package release is useful for users.
 
+## 0.1.1 - 2026-06-15
+
+A documentation-truth and samples release. No runtime behavior changed; the
+published package keeps `"dependencies": {}`.
+
+### Added
+
+- `sample/06-forrootasync-config`: a focused sample that registers the module
+  with `AsyncApiModule.forRootAsync`, resolving the document defaults
+  asynchronously from an injected `ConfigService` before generating the
+  document. Its smoke test asserts the async-resolved config seeds the
+  generated `info` block and validates the document with `@asyncapi/parser`.
+  Wired into the sample matrix and the sample catalog.
+
+### Docs
+
+- Dropped the "under construction" framing now that the v1 surface is complete.
+  The package README's `[!WARNING]` status block is replaced with a `[!NOTE]`
+  "v0.1.x — stable, v1 surface complete" block, and the stale "scaffold" /
+  "later milestones" language in `CONTRIBUTING.md`, the `AsyncApiModule` and
+  `interfaces` JSDoc, the scanner and document-model JSDoc, and the showcase
+  sample README is corrected to the shipped reality.
+
 ## 0.1.0 - 2026-06-14
 
 First public release of `@nest-native/asyncapi`. The package generates AsyncAPI

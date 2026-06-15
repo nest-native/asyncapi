@@ -1,6 +1,6 @@
 {
   "name": "@nest-native/asyncapi",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Decorator-first AsyncAPI 3.0 documentation generator for NestJS event-driven services — the AsyncAPI counterpart to @nestjs/swagger",
   "keywords": [
     "nestjs",
