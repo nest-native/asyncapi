@@ -1,7 +1,7 @@
 # Roadmap
 
 The package stays intentionally small and scoped to AsyncAPI 3.0 documentation.
-The v1 surface focuses on:
+The initial `0.x` release covers:
 
 - `AsyncApiModule` registration, including async options and the docs route.
 - The five decorators (`@AsyncApiChannel`, `@AsyncApiPub` / `@AsyncApiSub`,
@@ -22,7 +22,7 @@ This package is documentation only. It is not a runtime transport — transport
 stays in `@nestjs/microservices` or a broker integration such as
 `@nest-native/kafka`.
 
-The v1 scope deliberately does **not** ship:
+The current scope deliberately does **not** ship:
 
 - Full AsyncAPI 2.x support (best-effort conversion or none).
 - Spec-driven scaffolding (spec to code).

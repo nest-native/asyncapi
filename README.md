@@ -10,14 +10,16 @@
 </p>
 
 > [!NOTE]
-> **Status: v0.1.x — stable, v1 surface complete.** The full decorator set
-> (`@AsyncApiChannel`, `@AsyncApiPub` / `@AsyncApiSub`, `@AsyncApiMessage`,
+> **Status: `0.1.1` (`0.x`).** Functional and fully tested (100% coverage), and
+> usable today — but the public API may still change before `1.0`. The decorator
+> set (`@AsyncApiChannel`, `@AsyncApiPub` / `@AsyncApiSub`, `@AsyncApiMessage`,
 > `@AsyncApiHeaders`, `@AsyncApiServer`), `getAsyncApiDocument()`, the docs route
 > with the AsyncAPI viewer, typed Kafka/NATS/MQTT/AMQP bindings, the
 > class-validator and Zod schema paths, a validated migration from
 > `nestjs-asyncapi`, and the sample catalog have all landed. The documentation
-> site lives under [`website/`](website). As a 0.x release the public API may
-> still evolve; pin a version and read the [CHANGELOG](CHANGELOG.md).
+> site lives under [`website/`](website). Per semver, `0.x` minor releases can
+> include breaking changes, so pin a version — see the
+> [support policy](website/docs/support-policy.md) and the [CHANGELOG](CHANGELOG.md).
 
 ## What This Is
 
@@ -220,7 +222,8 @@ npm run ci
 
 ## Status and Roadmap
 
-`v0.1.0` is the first public release. Every v1 milestone has landed:
+`v0.1.0` was the first public release. The initial `0.x` release covers every
+milestone below:
 
 1. ~~**Bootstrap** — repo skeleton, empty package, CI green.~~ ✅
 2. ~~Spec generator skeleton: walks NestJS metadata, emits an empty valid 3.0 doc.~~ ✅
