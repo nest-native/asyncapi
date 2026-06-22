@@ -195,7 +195,7 @@ export interface AsyncApiHeadersMetadata {
  * payload is either a DTO class — turned into JSON Schema through the same
  * `@nestjs/swagger` chain that documents HTTP bodies — or a pre-computed
  * `{ name, schema }` (for example a Zod schema converted with
- * `zod-to-json-schema`). The generated message is registered once in
+ * `z.toJSONSchema()`). The generated message is registered once in
  * `components.messages` and referenced from the channel and operation.
  *
  * @param payload The payload DTO class or a pre-computed JSON Schema source.

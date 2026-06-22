@@ -22,7 +22,7 @@
     "release:check:pack": "npm run build --workspace @nest-native/asyncapi && node scripts/check-package-pack.mjs",
     "release:check": "npm run release:check:readme-links && npm run release:check:sample-versions && npm run release:check:pack",
     "ci:docs": "npm --prefix website ci && npm --prefix website run build",
-    "security:audit:package": "npm audit --omit=dev --audit-level=high",
+    "security:audit:package": "node scripts/audit-production-surface.mjs",
     "security:audit:docs": "npm --prefix website audit --audit-level=high",
     "security:audit": "npm run security:audit:package && npm run security:audit:docs",
     "showcase": "node scripts/run-optional-workspace.cjs nest-native-asyncapi-showcase test",
@@ -56,8 +56,7 @@
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
-    "zod": "^3.25.76",
-    "zod-to-json-schema": "^3.25.2"
+    "zod": "^4.4.3"
   },
   "packageManager": "npm@11.13.0",
   "overrides": {

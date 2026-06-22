@@ -73,9 +73,6 @@
     },
     "zod": {
       "optional": true
-    },
-    "zod-to-json-schema": {
-      "optional": true
     }
   },
   "devDependencies": {
@@ -88,7 +85,6 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typescript": "^6.0.3",
-    "zod": "^3.25.76",
-    "zod-to-json-schema": "^3.25.2"
+    "zod": "^4.4.3"
   }
 }

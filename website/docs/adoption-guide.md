@@ -39,7 +39,7 @@ reuses the same schema chain, so you do not rewrite the schema.
 publishOrderPlaced(): void {}
 ```
 
-If a payload comes from a Zod schema, convert it once with `zod-to-json-schema`
+If a payload comes from a Zod schema, convert it once with `z.toJSONSchema()`
 and pass the `{ name, schema }` source. Mixing both styles in one app is fine —
 see [Validation](validation.md).
 

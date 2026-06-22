@@ -7,7 +7,7 @@ import { buildRef } from './references';
  * under in `components.schemas`.
  *
  * This is the escape hatch for validation worlds other than `class-validator`:
- * a Zod schema converted with `zod-to-json-schema`, a hand-written JSON Schema,
+ * a Zod schema converted with `z.toJSONSchema()`, a hand-written JSON Schema,
  * or any other source the user already turned into JSON Schema. The generator
  * never introduces a parallel reflector for these — it trusts the supplied
  * schema and only registers it under {@link JsonSchemaSource.name}.
@@ -62,7 +62,7 @@ function loadSwagger(): SwaggerSchemaModule {
       'Generating an AsyncAPI schema from a DTO class requires the optional ' +
         'peer dependency "@nestjs/swagger". Install it, or pass a ' +
         'pre-computed JSON Schema ({ name, schema }) instead — for example a ' +
-        'Zod schema converted with "zod-to-json-schema".',
+        'Zod schema converted with "z.toJSONSchema()".',
     );
   }
 }

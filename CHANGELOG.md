@@ -6,6 +6,28 @@ This project follows semantic versioning for the published package. Sample,
 documentation, and CI-only changes may remain in `Unreleased` until the next
 package release is useful for users.
 
+## Unreleased
+
+### Changed
+
+- The optional Zod validation path now uses Zod 4's native `z.toJSONSchema()`
+  (with `target: 'draft-7'`) instead of the separate `zod-to-json-schema`
+  package. The samples, tests, and docs convert Zod schemas this way; the dev
+  and sample `zod` dependency moves to `^4`. The published package is unaffected
+  — it still keeps `"dependencies": {}`, never imports Zod, and registers the
+  pre-computed `{ name, schema }` verbatim, so any Zod-to-JSON-Schema converter
+  still works. Generated documents continue to validate against
+  `@asyncapi/parser`.
+
+### Internal
+
+- The `security:audit:package` release gate now packs the published tarball,
+  installs it into a throwaway project with `--omit=dev`, and audits that real
+  production closure (`scripts/audit-production-surface.mjs`) instead of running
+  `npm audit` against the shared workspace lockfile. This audits exactly what
+  consumers install and stops dev/peer/sample-only advisories from being
+  conflated with the published surface.
+
 ## 0.1.1 - 2026-06-15
 
 A documentation-truth and samples release. No runtime behavior changed; the

@@ -56,7 +56,7 @@ Method-level. Declares the payload of the message an operation sends or
 receives. The payload is either a DTO class — turned into JSON Schema through the
 same `@nestjs/swagger` chain that documents HTTP bodies — or a pre-computed
 `{ name, schema }` source (for example a Zod schema converted with
-`zod-to-json-schema`). The message is registered once in `components.messages`
+`z.toJSONSchema()`). The message is registered once in `components.messages`
 and referenced from the channel and operation.
 
 ```ts

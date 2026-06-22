@@ -4,7 +4,6 @@ import { describe, it } from 'node:test';
 import 'reflect-metadata';
 import { ApiProperty } from '@nestjs/swagger';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AsyncApiSchemaRegistry, JsonSchemaSource } from '../schema';
 
 describe('AsyncApiSchemaRegistry', () => {
@@ -21,16 +20,13 @@ describe('AsyncApiSchemaRegistry', () => {
     assert.deepEqual(registry.getSchemas().OrderHeaders, source.schema);
   });
 
-  it('accepts a Zod schema converted with zod-to-json-schema', () => {
+  it('accepts a Zod schema converted with z.toJSONSchema()', () => {
     const registry = new AsyncApiSchemaRegistry();
     const OrderShipped = z.object({
-      orderId: z.string().uuid(),
+      orderId: z.uuid(),
       carrier: z.enum(['ups', 'fedex']),
     });
-    const schema = zodToJsonSchema(OrderShipped, {
-      $refStrategy: 'none',
-      target: 'jsonSchema7',
-    });
+    const schema = z.toJSONSchema(OrderShipped, { target: 'draft-7' });
 
     const ref = registry.register({ name: 'OrderShipped', schema });
 

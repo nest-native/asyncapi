@@ -14,8 +14,7 @@ or AsyncAPI status.
 
 Required peers are `@nestjs/common`, `@nestjs/core`, `reflect-metadata`, and
 `rxjs`. The AsyncAPI parser, the viewer, `@nestjs/swagger`, `class-validator`,
-`zod`, and `zod-to-json-schema` are optional peers — install only the ecosystems
-your application uses.
+and `zod` are optional peers — install only the ecosystems your application uses.
 
 ## Public API Tiers
 
