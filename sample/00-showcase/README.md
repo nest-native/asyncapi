@@ -18,7 +18,7 @@ validated by `@asyncapi/parser`.
 - `@AsyncApiMessage(...)` / `@AsyncApiHeaders(...)` attaching payloads and headers
 - The class-validator world: DTOs turned into JSON Schema through the
   `@nestjs/swagger` chain (the `orders` channel)
-- The Zod world: a Zod schema converted with `zod-to-json-schema` (the
+- The Zod world: a Zod schema converted with `z.toJSONSchema()` (the
   `shipments` channel)
 - `@AsyncApiServer(...)`, `@AsyncApiChannelBindings(...)`, and
   `@AsyncApiOperationBindings(...)` declaring the Kafka and NATS brokers and the

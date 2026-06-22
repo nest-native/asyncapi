@@ -36,8 +36,8 @@ The package should feel native in NestJS projects and faithful to AsyncAPI 3.0:
 - Schemas reuse the `@nestjs/swagger` chain when class-validator DTOs are in
   play, so there is no parallel reflector.
 - Optional integrations stay optional. The AsyncAPI parser, the viewer,
-  `@nestjs/swagger`, Zod, and `zod-to-json-schema` are peer capabilities, not
-  runtime dependencies pulled into every app.
+  `@nestjs/swagger`, and Zod are peer capabilities, not runtime dependencies
+  pulled into every app.
 
 ## When To Use It
 

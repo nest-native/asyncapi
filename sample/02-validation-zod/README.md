@@ -1,13 +1,13 @@
 # Sample 02 - Zod validation
 
 Documents an AsyncAPI 3.0 message whose payload is described with Zod and
-converted to JSON Schema with `zod-to-json-schema`. The generator registers the
-converted schema verbatim — it never reflects over Zod itself, so any
-Zod-to-JSON-Schema converter works.
+converted to JSON Schema with Zod 4's native `z.toJSONSchema()`. The generator
+registers the converted schema verbatim — it never reflects over Zod itself, so
+any Zod-to-JSON-Schema converter works.
 
 ## What It Demonstrates
 
-- A Zod schema converted to JSON Schema with `zod-to-json-schema`
+- A Zod schema converted to JSON Schema with `z.toJSONSchema()`
 - `@AsyncApiMessage({ name, schema })` attaching a pre-computed JSON Schema
 - The schema becoming a `components.schemas` entry referenced from
   `components.messages`

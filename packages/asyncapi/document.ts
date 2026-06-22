@@ -81,7 +81,7 @@ export interface AsyncApiReference {
  *
  * AsyncAPI 3.0 uses JSON Schema (draft 7 compatible) for `payload` and
  * `headers`, the same schema dialect `@nestjs/swagger` emits for HTTP bodies,
- * so a schema produced by the `@nestjs/swagger` chain or by `zod-to-json-schema`
+ * so a schema produced by the `@nestjs/swagger` chain or by `z.toJSONSchema()`
  * drops in unchanged. The type stays intentionally open — JSON Schema is large
  * and the generator never rewrites the schemas it is handed.
  *

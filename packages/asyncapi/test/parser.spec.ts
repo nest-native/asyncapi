@@ -4,7 +4,6 @@ import 'reflect-metadata';
 import { ApiProperty } from '@nestjs/swagger';
 import { Parser } from '@asyncapi/parser';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   AsyncApiChannel,
   AsyncApiChannelBindings,
@@ -76,12 +75,11 @@ describe('@asyncapi/parser validation', () => {
 
   it('validates a document generated from a Zod payload', async () => {
     const OrderShipped = z.object({
-      orderId: z.string().uuid(),
+      orderId: z.uuid(),
       carrier: z.enum(['ups', 'fedex']),
     });
-    const schema = zodToJsonSchema(OrderShipped, {
-      $refStrategy: 'none',
-      target: 'jsonSchema7',
+    const schema = z.toJSONSchema(OrderShipped, {
+      target: 'draft-7',
     }) as AsyncApiSchemaObject;
 
     @AsyncApiChannel('shipments', { address: 'shipments.v1' })

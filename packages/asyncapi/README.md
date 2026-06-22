@@ -161,23 +161,22 @@ class OrdersHandler {
 }
 ```
 
-**Zod (optional).** Convert a Zod schema to JSON Schema with
-[`zod-to-json-schema`](https://www.npmjs.com/package/zod-to-json-schema) and pass
-it as a `{ name, schema }` source. The generator registers the schema verbatim
-and never reflects over Zod, so any Zod-to-JSON-Schema converter works.
+**Zod (optional).** Convert a Zod schema to JSON Schema with Zod 4's native
+[`z.toJSONSchema()`](https://zod.dev/json-schema) and pass it as a
+`{ name, schema }` source. The generator registers the schema verbatim and never
+reflects over Zod, so any Zod-to-JSON-Schema converter works.
 
 ```ts
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AsyncApiMessage } from '@nest-native/asyncapi';
 
-const OrderShipped = z.object({ orderId: z.string().uuid() });
+const OrderShipped = z.object({ orderId: z.uuid() });
 
 class ShipmentsHandler {
   @AsyncApiSub({ operationId: 'onOrderShipped' })
   @AsyncApiMessage({
     name: 'OrderShipped',
-    schema: zodToJsonSchema(OrderShipped, { $refStrategy: 'none' }),
+    schema: z.toJSONSchema(OrderShipped, { target: 'draft-7' }),
   })
   handleOrderShipped(): void {}
 }

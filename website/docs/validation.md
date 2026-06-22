@@ -42,28 +42,24 @@ pre-computed schema instead.
 
 ## Zod payloads (optional)
 
-For applications using Zod, convert the schema once with `zod-to-json-schema` and
-pass the resulting `{ name, schema }` source. The generator registers the schema
-verbatim — it never reflects over Zod itself.
+For applications using Zod, convert the schema once with Zod 4's native
+`z.toJSONSchema()` and pass the resulting `{ name, schema }` source. The
+generator registers the schema verbatim — it never reflects over Zod itself.
 
 ```ts
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { JsonSchemaSource } from '@nest-native/asyncapi';
 
 export const MetricReportedSchema = z.object({
   name: z.string().min(1),
   value: z.number(),
   unit: z.enum(['ms', 'count', 'bytes']),
-  reportedAt: z.string().datetime(),
+  reportedAt: z.iso.datetime(),
 });
 
 export const metricReportedMessage: JsonSchemaSource = {
   name: 'MetricReported',
-  schema: zodToJsonSchema(MetricReportedSchema, {
-    $refStrategy: 'none',
-    target: 'jsonSchema7',
-  }),
+  schema: z.toJSONSchema(MetricReportedSchema, { target: 'draft-7' }),
 };
 ```
 
@@ -72,9 +68,8 @@ export const metricReportedMessage: JsonSchemaSource = {
 publishMetricReported(): void {}
 ```
 
-`zod-to-json-schema` and `zod` are optional peers. They are only needed in
-application code that produces the schema source — the package itself never
-imports them.
+`zod` is an optional peer. It is only needed in application code that produces
+the schema source — the package itself never imports it.
 
 ## Mixing Both
 

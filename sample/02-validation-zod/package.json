@@ -2,7 +2,7 @@
   "name": "nest-native-asyncapi-sample-02-validation-zod",
   "version": "0.0.0",
   "private": true,
-  "description": "Sample 02 - Zod payloads to JSON Schema via zod-to-json-schema",
+  "description": "Sample 02 - Zod payloads to JSON Schema via z.toJSONSchema()",
   "license": "MIT",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -18,8 +18,7 @@
     "@nestjs/platform-express": "^11.1.27",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
-    "zod": "3.25.76",
-    "zod-to-json-schema": "3.25.2"
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "26.0.0",

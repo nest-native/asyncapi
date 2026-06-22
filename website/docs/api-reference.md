@@ -95,7 +95,7 @@ strings). Exported for advanced use.
 - A **DTO class** — resolved through the same `@nestjs/swagger` chain that
   documents HTTP bodies.
 - A **`JsonSchemaSource`** — a pre-computed `{ name, schema }`, for example a Zod
-  schema converted with `zod-to-json-schema`.
+  schema converted with `z.toJSONSchema()`.
 
 `AsyncApiSchemaRegistry` is the registry the generator uses to collect
 `components.schemas` and dedupe shared DTOs. See [Validation](validation.md).

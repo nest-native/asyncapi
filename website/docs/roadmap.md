@@ -30,7 +30,7 @@ The current scope deliberately does **not** ship:
 - OpenAPI to AsyncAPI conversion.
 
 DTO classes documented through `@nestjs/swagger` are the canonical schema path.
-Zod via `zod-to-json-schema` is supported as an optional, application-owned
+Zod via `z.toJSONSchema()` is supported as an optional, application-owned
 choice and does not become a required dependency or the default documentation
 path. The package never introduces a parallel schema reflector.
 

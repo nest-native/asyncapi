@@ -24,7 +24,7 @@ spec-compliant output, never hide AsyncAPI semantics.
 - Support both validation worlds for message payloads:
   - `class-validator` + DTOs (default; metadata-driven JSON Schema,
     mirroring `@nestjs/swagger`)
-  - Zod (optional; via `zod-to-json-schema`)
+  - Zod (optional; via `z.toJSONSchema()`)
 
 ### 2. Public API Assumptions (this is what users will copy-paste)
 

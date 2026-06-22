@@ -78,7 +78,7 @@ that exact chain to produce JSON Schema, so HTTP and event schemas come from the
 same reflector.
 
 Zod is supported as an optional application-owned path: convert a Zod schema
-with `zod-to-json-schema` and pass the resulting `{ name, schema }` to
+with `z.toJSONSchema()` and pass the resulting `{ name, schema }` to
 `@AsyncApiMessage()`. The package does not introduce a parallel schema reflector
 and does not make Zod a runtime dependency. See [Validation](validation.md).
 
