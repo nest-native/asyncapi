@@ -8,6 +8,8 @@ package release is useful for users.
 
 ## Unreleased
 
+## 0.1.2 - 2026-06-22
+
 ### Changed
 
 - The optional Zod validation path now uses Zod 4's native `z.toJSONSchema()`
