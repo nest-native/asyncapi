@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { Parser } from '@asyncapi/parser';
 import { NestFactory } from '@nestjs/core';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from '../src/app.module';
 import { createAsyncApiDocument } from '../src/asyncapi';
 
@@ -15,7 +16,13 @@ const parser = new Parser();
  * the official `@asyncapi/parser`.
  */
 async function smoke(): Promise<void> {
-  const app = await NestFactory.create(AppModule, {
+  // The HTTP driver is supplied explicitly via `ExpressAdapter` instead of
+  // `NestFactory`'s default-driver auto-discovery. Auto-discovery resolves
+  // `@nestjs/platform-express` relative to `@nestjs/core`, so it only succeeds
+  // when both are hoisted together; constructing the adapter here resolves it
+  // from this sample's own declared dependency, independent of workspace
+  // hoisting.
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(), {
     abortOnError: false,
     logger: false,
   });

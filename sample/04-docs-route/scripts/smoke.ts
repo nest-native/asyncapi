@@ -4,6 +4,7 @@ import { AddressInfo } from 'node:net';
 import { Parser } from '@asyncapi/parser';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { AsyncApiModule } from '@nest-native/asyncapi';
 import { AppModule } from '../src/app.module';
 import { createAsyncApiDocument } from '../src/asyncapi';
@@ -16,7 +17,14 @@ const parser = new Parser();
  * validate both served documents with the official `@asyncapi/parser`.
  */
 async function smoke(): Promise<void> {
-  const app = await NestFactory.create(AppModule, {
+  // The HTTP driver is supplied explicitly via `ExpressAdapter` instead of
+  // `NestFactory`'s default-driver auto-discovery. Auto-discovery resolves
+  // `@nestjs/platform-express` relative to `@nestjs/core`, so it only succeeds
+  // when both are hoisted together; constructing the adapter here resolves it
+  // from this sample's own declared dependency, independent of workspace
+  // hoisting. The docs route below relies on a live HTTP server, so a working
+  // driver is mandatory for this smoke.
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(), {
     abortOnError: false,
     logger: false,
   });
