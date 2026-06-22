@@ -4,9 +4,11 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@nest-native/asyncapi"><img src="https://img.shields.io/npm/v/@nest-native/asyncapi.svg" alt="NPM Version" /></a>
+  <a href="https://www.npmjs.com/package/@nest-native/asyncapi"><img src="https://img.shields.io/npm/dm/@nest-native/asyncapi.svg" alt="NPM Downloads" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Package License" /></a>
   <img src="https://img.shields.io/badge/coverage-100%25-brightgreen.svg" alt="Test Coverage" />
   <img src="https://img.shields.io/badge/status-0.1.x-blue.svg" alt="Status: 0.1.x" />
+  <a href="https://nest-native.dev/asyncapi/"><img src="https://img.shields.io/badge/docs-%40nest--native%2Fasyncapi-0f766e.svg" alt="Documentation" /></a>
 </p>
 
 > [!NOTE]
