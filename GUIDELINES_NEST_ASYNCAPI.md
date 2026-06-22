@@ -159,3 +159,16 @@ spec-compliant output, never hide AsyncAPI semantics.
 (Empty at v0; grows as the project lands decisions worth preserving. Append
 entries here when an architectural call repeats or is non-obvious. Each
 entry should be one short paragraph with rationale.)
+
+- **Audit scope.** The `security:audit` release gate audits the *published*
+  surface — `npm audit --omit=dev --audit-level=high`. Since the package
+  publishes `"dependencies": {}`, this is exactly what consumers install.
+  Advisories confined to dev/peer/build tooling or the docs `website/` are
+  tracked and patched via Dependabot but do not block releases — they cannot
+  reach consumers. Patch them in their own PRs.
+- **Strictness scope.** The non-negotiables (100% coverage,
+  cognitive-complexity ≤ 15, zero published runtime deps, isolated
+  major-version review) govern the *core* published package
+  (`packages/asyncapi`). Non-core code — `sample/*`, the `website/`, and dev
+  tooling — uses lighter rules: their dependency updates (including majors) may
+  merge on green CI without the core's major-isolation ceremony.
