@@ -10,11 +10,12 @@ import { orderShippedMessage } from './shipment.schema';
 
 /**
  * A channel handler showcasing the Zod validation world and NATS transport
- * bindings. The payload schema is supplied as pre-computed JSON Schema
- * (converted from Zod), proving the generator is agnostic to the validation
- * library producing the schema. `@AsyncApiServer` declares the NATS server and
- * `@AsyncApiOperationBindings` documents the NATS queue group, showing a second
- * transport alongside the orders channel's Kafka bindings.
+ * bindings. The payload schema is the Zod schema itself — the generator
+ * detects it and converts it with Zod 4's native `z.toJSONSchema()`, so the
+ * event contract is defined once in Zod and nowhere else. `@AsyncApiServer`
+ * declares the NATS server and `@AsyncApiOperationBindings` documents the NATS
+ * queue group, showing a second transport alongside the orders channel's Kafka
+ * bindings.
  */
 @Controller()
 @AsyncApiServer('nats', 'nats://nats.example.com:4222', 'nats', {

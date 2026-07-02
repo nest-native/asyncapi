@@ -163,10 +163,11 @@ class OrdersHandler {
 }
 ```
 
-**Zod (optional).** Convert a Zod schema to JSON Schema with Zod 4's native
-[`z.toJSONSchema()`](https://zod.dev/json-schema) and pass it as a
-`{ name, schema }` source. The generator registers the schema verbatim and never
-reflects over Zod, so any Zod-to-JSON-Schema converter works.
+**Zod (optional).** Pass a Zod schema directly as a `{ name, schema }` source.
+The generator detects it and converts it with Zod 4's native
+[`z.toJSONSchema()`](https://zod.dev/json-schema) in the draft-07 dialect
+AsyncAPI 3.0 documents default to. `zod` (`^4`) is an optional peer, required
+lazily only when a Zod source is registered — never at module load.
 
 ```ts
 import { z } from 'zod';
@@ -176,13 +177,14 @@ const OrderShipped = z.object({ orderId: z.uuid() });
 
 class ShipmentsHandler {
   @AsyncApiSub({ operationId: 'onOrderShipped' })
-  @AsyncApiMessage({
-    name: 'OrderShipped',
-    schema: z.toJSONSchema(OrderShipped, { target: 'draft-7' }),
-  })
+  @AsyncApiMessage({ name: 'OrderShipped', schema: OrderShipped })
   handleOrderShipped(): void {}
 }
 ```
+
+Need custom conversion options? Convert yourself and pass the result
+(`{ name, schema: z.toJSONSchema(OrderShipped, options) }`) — pre-computed
+JSON Schema is registered verbatim, so any Zod-to-JSON-Schema converter works.
 
 The message name defaults to the DTO class name (or the schema source `name`),
 the content type defaults to `application/json`, and a payload DTO shared across

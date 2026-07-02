@@ -77,10 +77,11 @@ schema chain. Pass a DTO class to `@AsyncApiMessage()` and the generator reuses
 that exact chain to produce JSON Schema, so HTTP and event schemas come from the
 same reflector.
 
-Zod is supported as an optional application-owned path: convert a Zod schema
-with `z.toJSONSchema()` and pass the resulting `{ name, schema }` to
-`@AsyncApiMessage()`. The package does not introduce a parallel schema reflector
-and does not make Zod a runtime dependency. See [Validation](validation.md).
+Zod is supported as an optional path: pass a Zod schema in a `{ name, schema }`
+source to `@AsyncApiMessage()` and the generator converts it with Zod 4's own
+`z.toJSONSchema()`, loaded lazily from the optional `zod` peer. The package does
+not introduce a parallel schema reflector and does not make Zod a runtime
+dependency. See [Validation](validation.md).
 
 ## Security Boundary
 

@@ -18,7 +18,8 @@ validated by `@asyncapi/parser`.
 - `@AsyncApiMessage(...)` / `@AsyncApiHeaders(...)` attaching payloads and headers
 - The class-validator world: DTOs turned into JSON Schema through the
   `@nestjs/swagger` chain (the `orders` channel)
-- The Zod world: a Zod schema converted with `z.toJSONSchema()` (the
+- The Zod world: a Zod schema passed directly to `@AsyncApiMessage` and
+  converted by the generator with Zod 4's native `z.toJSONSchema()` (the
   `shipments` channel)
 - `@AsyncApiServer(...)`, `@AsyncApiChannelBindings(...)`, and
   `@AsyncApiOperationBindings(...)` declaring the Kafka and NATS brokers and the
@@ -52,7 +53,7 @@ the generated AsyncAPI document to stdout.
   `@AsyncApiHeaders`, using class-validator DTOs.
 - `src/orders/order.dto.ts`: the class-validator payload and headers DTOs.
 - `src/shipments/shipments.handler.ts`: a channel handler using a Zod payload.
-- `src/shipments/shipment.schema.ts`: the Zod schema and its JSON Schema source.
+- `src/shipments/shipment.schema.ts`: the Zod schema and its named source.
 - `src/asyncapi.ts`: builds the AsyncAPI document from the running application.
 - `scripts/smoke.ts`: boots the app, asserts the generated document, and
   validates it with `@asyncapi/parser`.

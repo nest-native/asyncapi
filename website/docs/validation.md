@@ -42,13 +42,15 @@ pre-computed schema instead.
 
 ## Zod payloads (optional)
 
-For applications using Zod, convert the schema once with Zod 4's native
-`z.toJSONSchema()` and pass the resulting `{ name, schema }` source. The
-generator registers the schema verbatim — it never reflects over Zod itself.
+For applications using Zod, pass the Zod schema directly in a
+`{ name, schema }` source. The generator detects it (through the Standard
+Schema marker Zod 4 implements) and converts it with Zod 4's native
+`z.toJSONSchema()` in the draft-07 dialect AsyncAPI 3.0 documents default to —
+the event contract is written once, in Zod.
 
 ```ts
 import { z } from 'zod';
-import { JsonSchemaSource } from '@nest-native/asyncapi';
+import { ZodSchemaSource } from '@nest-native/asyncapi';
 
 export const MetricReportedSchema = z.object({
   name: z.string().min(1),
@@ -57,9 +59,9 @@ export const MetricReportedSchema = z.object({
   reportedAt: z.iso.datetime(),
 });
 
-export const metricReportedMessage: JsonSchemaSource = {
+export const metricReportedMessage: ZodSchemaSource = {
   name: 'MetricReported',
-  schema: z.toJSONSchema(MetricReportedSchema, { target: 'draft-7' }),
+  schema: MetricReportedSchema,
 };
 ```
 
@@ -68,8 +70,22 @@ export const metricReportedMessage: JsonSchemaSource = {
 publishMetricReported(): void {}
 ```
 
-`zod` is an optional peer. It is only needed in application code that produces
-the schema source — the package itself never imports it.
+`zod` (`^4`) is an optional peer, required lazily only when a Zod source is
+actually registered — never at module load. Registering a Zod source without
+`zod` installed (or with a pre-4 major, which lacks the native
+`z.toJSONSchema()`) fails with an actionable error.
+
+Need custom conversion options (metadata registries, `io: 'input'`, overrides,
+a different target dialect)? Convert yourself and pass the result as a
+pre-computed JSON Schema — the generator registers it verbatim, so any
+Zod-to-JSON-Schema converter works:
+
+```ts
+export const metricReportedMessage: JsonSchemaSource = {
+  name: 'MetricReported',
+  schema: z.toJSONSchema(MetricReportedSchema, { target: 'draft-7' }),
+};
+```
 
 ## Mixing Both
 

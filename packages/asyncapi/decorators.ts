@@ -155,7 +155,7 @@ export interface AsyncApiMessageOptions {
   /**
    * The message name used as the `components.messages` key and as the message's
    * `name` field. Defaults to the payload DTO's class name, or to a
-   * {@link JsonSchemaSource}'s `name`.
+   * `{ name, schema }` source's `name`.
    */
   name?: string;
   /** A human-friendly title for the message. */
@@ -176,7 +176,7 @@ export interface AsyncApiMessageOptions {
  * The method-level metadata written by {@link AsyncApiMessage}.
  */
 export interface AsyncApiMessageMetadata extends AsyncApiMessageOptions {
-  /** The payload schema source (DTO class or pre-computed JSON Schema). */
+  /** The payload schema source (DTO class, Zod schema, or JSON Schema). */
   payload: SchemaSource;
 }
 
@@ -184,7 +184,7 @@ export interface AsyncApiMessageMetadata extends AsyncApiMessageOptions {
  * The method-level metadata written by {@link AsyncApiHeaders}.
  */
 export interface AsyncApiHeadersMetadata {
-  /** The headers schema source (DTO class or pre-computed JSON Schema). */
+  /** The headers schema source (DTO class, Zod schema, or JSON Schema). */
   headers: SchemaSource;
 }
 
@@ -192,13 +192,14 @@ export interface AsyncApiHeadersMetadata {
  * Declare the payload of the message an operation sends or receives.
  *
  * Apply at method level alongside {@link AsyncApiPub} / {@link AsyncApiSub}. The
- * payload is either a DTO class — turned into JSON Schema through the same
- * `@nestjs/swagger` chain that documents HTTP bodies — or a pre-computed
- * `{ name, schema }` (for example a Zod schema converted with
- * `z.toJSONSchema()`). The generated message is registered once in
- * `components.messages` and referenced from the channel and operation.
+ * payload is a DTO class — turned into JSON Schema through the same
+ * `@nestjs/swagger` chain that documents HTTP bodies — or a `{ name, schema }`
+ * source whose `schema` is either a Zod schema (converted natively with Zod 4's
+ * `z.toJSONSchema()`) or a pre-computed JSON Schema (registered verbatim). The
+ * generated message is registered once in `components.messages` and referenced
+ * from the channel and operation.
  *
- * @param payload The payload DTO class or a pre-computed JSON Schema source.
+ * @param payload The payload DTO class, Zod schema source, or JSON Schema source.
  * @param options Message metadata (name, title, summary, description, contentType).
  */
 export function AsyncApiMessage(
@@ -222,9 +223,10 @@ export function AsyncApiMessage(
  *
  * Apply at method level alongside {@link AsyncApiMessage}. The headers schema is
  * resolved exactly as the payload is — a DTO class through the `@nestjs/swagger`
- * chain, or a pre-computed `{ name, schema }`.
+ * chain, or a `{ name, schema }` source carrying a Zod schema or a pre-computed
+ * JSON Schema.
  *
- * @param headers The headers DTO class or a pre-computed JSON Schema source.
+ * @param headers The headers DTO class, Zod schema source, or JSON Schema source.
  */
 export function AsyncApiHeaders(headers: SchemaSource): MethodDecorator {
   const metadata: AsyncApiHeadersMetadata = { headers };

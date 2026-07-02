@@ -53,11 +53,12 @@ handleOrderPlaced(): void {}
 ## `@AsyncApiMessage(payload, options?)`
 
 Method-level. Declares the payload of the message an operation sends or
-receives. The payload is either a DTO class — turned into JSON Schema through the
-same `@nestjs/swagger` chain that documents HTTP bodies — or a pre-computed
-`{ name, schema }` source (for example a Zod schema converted with
-`z.toJSONSchema()`). The message is registered once in `components.messages`
-and referenced from the channel and operation.
+receives. The payload is a DTO class — turned into JSON Schema through the same
+`@nestjs/swagger` chain that documents HTTP bodies — or a `{ name, schema }`
+source whose `schema` is either a Zod schema (converted natively with Zod 4's
+`z.toJSONSchema()`) or a pre-computed JSON Schema (registered verbatim). The
+message is registered once in `components.messages` and referenced from the
+channel and operation.
 
 ```ts
 @AsyncApiMessage(OrderPlacedDto, {

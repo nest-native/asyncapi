@@ -39,9 +39,9 @@ reuses the same schema chain, so you do not rewrite the schema.
 publishOrderPlaced(): void {}
 ```
 
-If a payload comes from a Zod schema, convert it once with `z.toJSONSchema()`
-and pass the `{ name, schema }` source. Mixing both styles in one app is fine —
-see [Validation](validation.md).
+If a payload comes from a Zod schema, pass it directly as a `{ name, schema }`
+source — the generator converts it with Zod 4's native `z.toJSONSchema()`.
+Mixing both styles in one app is fine — see [Validation](validation.md).
 
 ## Add Operations And Headers Gradually
 

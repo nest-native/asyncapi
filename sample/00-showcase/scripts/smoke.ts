@@ -128,12 +128,22 @@ function assertComponents(document: ShowcaseDocument): void {
     'class-validator headers schema is present',
   );
 
-  // Zod world: pre-computed JSON Schema registered verbatim.
+  // Zod world: the Zod schema is passed directly and converted by the
+  // generator with Zod 4's native z.toJSONSchema().
   assert.equal(
     messages.OrderShipped.payload?.$ref,
     '#/components/schemas/OrderShipped',
   );
-  assert.ok(schemas.OrderShipped, 'Zod-derived payload schema is present');
+  const orderShipped = schemas.OrderShipped as
+    | Record<string, unknown>
+    | undefined;
+  assert.ok(orderShipped, 'Zod-derived payload schema is present');
+  assert.equal(
+    orderShipped.type,
+    'object',
+    'the Zod schema was converted to JSON Schema',
+  );
+  assert.deepEqual(orderShipped.required, ['orderId', 'carrier', 'shippedAt']);
 }
 
 function assertTransportBindings(document: ShowcaseDocument): void {
