@@ -1,11 +1,14 @@
 import { z } from 'zod';
-import { JsonSchemaSource } from '@nest-native/asyncapi';
+import { ZodSchemaSource } from '@nest-native/asyncapi';
 
 /**
  * The `order shipped` payload, described with Zod — the optional validation
- * world. Zod 4's native `z.toJSONSchema()` converts the Zod schema to JSON
- * Schema, which `@nest-native/asyncapi` registers verbatim. The package never
- * reflects over Zod itself, so any Zod-to-JSON-Schema converter works here.
+ * world. The Zod schema is handed to `@AsyncApiMessage` as-is: the generator
+ * detects it and converts it lazily with Zod 4's native `z.toJSONSchema()`
+ * (in the draft-07 dialect AsyncAPI 3.0 documents default to), so the event
+ * contract is written exactly once. Passing pre-computed JSON Schema
+ * (`{ name, schema: z.toJSONSchema(...) }`) remains supported when custom
+ * conversion options are needed.
  */
 export const OrderShippedSchema = z.object({
   orderId: z.uuid(),
@@ -15,11 +18,9 @@ export const OrderShippedSchema = z.object({
 
 /**
  * The schema source handed to `@AsyncApiMessage`: a name for the
- * `components.schemas` entry plus the converted JSON Schema. `target: 'draft-7'`
- * emits the draft-07 dialect AsyncAPI 3.0 documents, inlined so it stands alone
- * under its component name.
+ * `components.schemas` entry plus the Zod schema itself.
  */
-export const orderShippedMessage: JsonSchemaSource = {
+export const orderShippedMessage: ZodSchemaSource = {
   name: 'OrderShipped',
-  schema: z.toJSONSchema(OrderShippedSchema, { target: 'draft-7' }),
+  schema: OrderShippedSchema,
 };

@@ -183,9 +183,10 @@ function readServerMetadata(
 
 /**
  * Derive the name a schema source contributes. A DTO class exposes its class
- * name through `Function.prototype.name`; a {@link JsonSchemaSource} exposes the
- * `name` it was created with. Both live on `.name`, so the same access works for
- * either and doubles as the default message name.
+ * name through `Function.prototype.name`; a named `{ name, schema }` source
+ * (JSON Schema or Zod) exposes the `name` it was created with. All live on
+ * `.name`, so the same access works for any source and doubles as the default
+ * message name.
  */
 function schemaSourceName(source: SchemaSource): string {
   return source.name;

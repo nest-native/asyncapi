@@ -97,6 +97,36 @@ describe('@asyncapi/parser validation', () => {
     assert.deepEqual(await validate(document), []);
   });
 
+  it('validates a document generated from Zod schemas passed directly', async () => {
+    const OrderShipped = z.object({
+      orderId: z.uuid(),
+      carrier: z.enum(['ups', 'fedex']),
+      shippedAt: z.iso.datetime(),
+    });
+    const ShipmentHeaders = z.object({ traceId: z.uuid() });
+
+    @AsyncApiChannel('shipments', { address: 'shipments.v1' })
+    class ShipmentsChannel {
+      @AsyncApiSub({ operationId: 'onOrderShipped' })
+      @AsyncApiMessage({ name: 'OrderShipped', schema: OrderShipped })
+      @AsyncApiHeaders({ name: 'ShipmentHeaders', schema: ShipmentHeaders })
+      onOrderShipped(): void {}
+    }
+
+    const document = buildAsyncApiDocument(
+      { title: 'Shipments Service', version: '1.0.0' },
+      [{ metatype: ShipmentsChannel, methodNames: ['onOrderShipped'] }],
+    );
+
+    const message = document.components.messages?.OrderShipped;
+    assert.equal(message?.payload?.$ref, '#/components/schemas/OrderShipped');
+    assert.equal(message?.headers?.$ref, '#/components/schemas/ShipmentHeaders');
+    assert.equal(document.components.schemas?.OrderShipped.type, 'object');
+    assert.equal(document.components.schemas?.ShipmentHeaders.type, 'object');
+
+    assert.deepEqual(await validate(document), []);
+  });
+
   it('validates Kafka servers, channel, operation, and message bindings', async () => {
     @AsyncApiServer('production', 'broker.example.com:9092', 'kafka', {
       title: 'Production Kafka',

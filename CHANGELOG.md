@@ -8,6 +8,33 @@ package release is useful for users.
 
 ## Unreleased
 
+## 0.2.0 - 2026-07-01
+
+### Added
+
+- `@AsyncApiMessage` and `@AsyncApiHeaders` now accept a Zod schema directly:
+  pass `{ name, schema }` where `schema` is the Zod schema itself and the
+  generator converts it with Zod 4's native `z.toJSONSchema()`
+  (`target: 'draft-7'`, the dialect AsyncAPI 3.0 documents default to) and
+  registers the result exactly like a pre-computed JSON Schema. Previously the
+  event contract had to be converted by hand at every source, duplicating
+  shapes that already exist in Zod. Detection uses the Standard Schema
+  `~standard` marker plus Zod's validator surface (`def` + `safeParse`), so
+  the JSON Schema `z.toJSONSchema()` emits — which Zod 4.4+ also tags with a
+  non-enumerable marker — keeps registering verbatim, and a live schema from
+  another Standard Schema vendor is rejected with an actionable error instead
+  of being embedded as an object graph. The accepted schema is typed
+  structurally (`StandardSchemaLike`), so consumers without Zod installed
+  still typecheck; the new `ZodSchemaSource` joins the `SchemaSource` union.
+  `zod` (`^4`) becomes a declared optional peer, required lazily only when a
+  Zod source is registered — never at module load — and the published package
+  keeps `"dependencies": {}`. Registering a Zod source without `zod` (or with
+  a pre-4 major, which lacks the native converter) fails with an actionable
+  error. Generated documents still validate against `@asyncapi/parser`.
+  Pre-computed `{ name, schema }` sources remain supported unchanged for
+  custom conversion options; the showcase and Zod samples now pass their Zod
+  schemas directly.
+
 ## 0.1.2 - 2026-06-22
 
 ### Changed
