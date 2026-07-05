@@ -222,6 +222,16 @@ Run the local gate with:
 npm run ci
 ```
 
+One **optional, local-only** layer sits on top (it never runs in CI, and forks
+work without it):
+
+- **Mutation testing** — `npm run test:mutation` (incremental Stryker run;
+  `test:mutation:full` re-tests everything). Scope with `STRYKER_MUTATE`
+  (comma-separated globs).
+
+Details — including the pre-PR ritual and agent instructions — in
+[GUIDELINES_NEST_ASYNCAPI.md](GUIDELINES_NEST_ASYNCAPI.md#13-mutation-testing-stryker--local-only-never-in-ci).
+
 ## Status and Roadmap
 
 `v0.1.0` was the first public release. The initial `0.x` release covers every

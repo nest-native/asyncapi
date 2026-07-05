@@ -172,3 +172,22 @@ entry should be one short paragraph with rationale.)
   (`packages/asyncapi`). Non-core code — `sample/*`, the `website/`, and dev
   tooling — uses lighter rules: their dependency updates (including majors) may
   merge on green CI without the core's major-isolation ceremony.
+
+### 13. Mutation testing (Stryker — local only, never in CI)
+
+Everything here is **opt-in and local-only**. Plain `npm test` and CI are
+unchanged; forks work out of the box. **CI never runs mutation testing** — it
+is an on-demand, local-only gate.
+
+- `npm run test:mutation` — **incremental** run (cache:
+  `reports/stryker-incremental.json`; only re-tests what changed). This is the
+  pre-PR ritual for changes to package source.
+- `npm run test:mutation:full` — every mutant from scratch (`--force`).
+- `STRYKER_MUTATE='packages/asyncapi/generator.ts,packages/asyncapi/schema/**'` —
+  comma-separated globs to scope a run to the files a change touched.
+- Report: `reports/mutation/mutation.html`. Thresholds are advisory
+  (`break: null`) — the signal is *which mutants survive*, not the score.
+
+Pre-PR ritual: run `npm run test:mutation` (scope with `STRYKER_MUTATE` when
+the change is small), look at surviving mutants, and mention the outcome in
+the PR body. Keep CI fast — that is a deliberate contract.
