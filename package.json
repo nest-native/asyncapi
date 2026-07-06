@@ -48,7 +48,7 @@
     "@nestjs/swagger": "^11.4.4",
     "@nestjs/testing": "^11.1.27",
     "@stryker-mutator/core": "^9.6.1",
-    "@types/node": "^26.0.1",
+    "@types/node": "^26.1.0",
     "@typescript-eslint/parser": "^8.62.0",
     "c8": "^11.0.0",
     "class-transformer": "^0.5.1",
