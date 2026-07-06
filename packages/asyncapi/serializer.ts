@@ -97,11 +97,11 @@ function emitArray(value: YamlValue[], indent: number): string[] {
   for (const entry of value) {
     const child = emitValue(entry, indent + 1);
 
-    if (isInline(entry)) {
-      lines.push(`${pad}- ${child[0]}`);
-    } else {
-      lines.push(`${pad}- ${child[0].trimStart()}`, ...child.slice(1));
-    }
+    // A scalar or empty-container entry is a single line with no leading
+    // whitespace, so this unified form renders it as `- value` exactly as a
+    // dedicated inline branch would; a non-empty container starts on the dash
+    // line (its own indent trimmed off) and continues indented beneath it.
+    lines.push(`${pad}- ${child[0].trimStart()}`, ...child.slice(1));
   }
 
   return lines;
@@ -111,12 +111,11 @@ function emitArray(value: YamlValue[], indent: number): string[] {
  * A value renders inline (on its parent's `key:` or `-` line) only when it is a
  * scalar or an empty container (`[]` / `{}`). A non-empty container always
  * starts on its own following line(s), so its first emitted line is never
- * appended after the parent token.
+ * appended after the parent token. An array and an object are each empty
+ * exactly when they own no enumerable keys, so one `Object.keys` check settles
+ * both container kinds.
  */
 function isInline(value: YamlValue): boolean {
-  if (Array.isArray(value)) {
-    return value.length === 0;
-  }
   if (value !== null && typeof value === 'object') {
     return Object.keys(value).length === 0;
   }
@@ -135,12 +134,10 @@ function formatKey(key: string): string {
 /**
  * Format a scalar leaf. Strings are quoted when ambiguous so they never parse
  * back as a number, boolean, null, or structural token; numbers, booleans, and
- * `null` use their canonical YAML spelling.
+ * `null` use their canonical YAML spelling via `String()` — which renders
+ * `null` as `null` and so needs no separate branch.
  */
 function formatScalar(value: string | number | boolean | null): string {
-  if (value === null) {
-    return 'null';
-  }
   if (typeof value === 'string') {
     return needsQuoting(value) ? quote(value) : value;
   }
