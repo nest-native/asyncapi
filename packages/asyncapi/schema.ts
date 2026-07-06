@@ -186,6 +186,9 @@ function loadZodToJsonSchema(): ZodToJsonSchema {
 
   try {
     toJSONSchema = (require('zod') as ZodModule).z.toJSONSchema;
+    // Stryker disable next-line BlockStatement: `toJSONSchema` is already
+    // `undefined` from its declaration, so clearing it here is behaviorally
+    // redundant — the `typeof` guard below reports the missing peer either way.
   } catch {
     toJSONSchema = undefined;
   }

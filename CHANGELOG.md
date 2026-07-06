@@ -13,6 +13,12 @@ package release is useful for users.
   `STRYKER_MUTATE` scoping (comma-separated globs). Opt-in and local-only —
   CI is unchanged. See the new "Mutation testing" section in
   GUIDELINES_NEST_ASYNCAPI.md.
+- Internal: simplified three redundant branches in the YAML serializer
+  (`isInline` folds arrays into the shared empty-container check, `formatScalar`
+  lets `String()` spell `null`, and `emitArray` uses one dash-line form for
+  inline and block entries). Behavior-neutral — identical serializer output,
+  verified by the existing suite and the `@asyncapi/parser` round-trip — and it
+  trims the emitter's cognitive complexity.
 
 ## 0.2.0 - 2026-07-01
 
