@@ -173,7 +173,7 @@ entry should be one short paragraph with rationale.)
   tooling — uses lighter rules: their dependency updates (including majors) may
   merge on green CI without the core's major-isolation ceremony.
 
-### 13. Mutation testing (Stryker — local only, never in CI)
+### 13. Mutation testing (Stryker — occasional targeted audit, local only, never in CI)
 
 Everything here is **opt-in and local-only**. Plain `npm test` and CI are
 unchanged; forks work out of the box. **CI never runs mutation testing** — it
@@ -188,6 +188,13 @@ is an on-demand, local-only gate.
 - Report: `reports/mutation/mutation.html`. Thresholds are advisory
   (`break: null`) — the signal is *which mutants survive*, not the score.
 
-Pre-PR ritual: run `npm run test:mutation` (scope with `STRYKER_MUTATE` when
-the change is small), look at surviving mutants, and mention the outcome in
-the PR body. Keep CI fast — that is a deliberate contract.
+**Occasional targeted audit, not a per-PR gate.** Run mutation testing
+deliberately when you've reworked a file's logic — not on every PR. Scope
+`STRYKER_MUTATE` to that one file, keep `--concurrency 2`, and verify a kill the
+fast way: hand-apply the surviving mutation, run the plain suite, confirm your
+new test fails, then `git checkout --` to revert. Full/unscoped runs re-test
+every mutant against the whole suite and are slow to impractical — lean on
+scoped runs plus hand-verification, and `kill -9` any leftover `stryker`
+processes after a timeout. Treat survivors by the doctrine (add a test /
+simplify redundant code / `// Stryker disable` a true equivalent / assert bounds
+for timing). Keep CI fast — that is a deliberate contract.
