@@ -77,7 +77,7 @@
     }
   },
   "devDependencies": {
-    "@asyncapi/parser": "^3.4.0",
+    "@asyncapi/parser": "^3.6.1",
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
     "@nestjs/swagger": "^11.4.6",
