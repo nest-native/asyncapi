@@ -11,7 +11,7 @@
     "start": "ts-node --transpile-only src/main.ts"
   },
   "dependencies": {
-    "@asyncapi/parser": "3.6.0",
+    "@asyncapi/parser": "3.6.1",
     "@nest-native/asyncapi": "0.2.0",
     "@nestjs/common": "11.1.28",
     "@nestjs/core": "11.1.28",
