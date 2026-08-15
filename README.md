@@ -7,12 +7,11 @@
   <a href="https://www.npmjs.com/package/@nest-native/asyncapi"><img src="https://img.shields.io/npm/dm/@nest-native/asyncapi.svg" alt="NPM Downloads" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Package License" /></a>
   <img src="https://img.shields.io/badge/coverage-100%25-brightgreen.svg" alt="Test Coverage" />
-  <img src="https://img.shields.io/badge/status-0.1.x-blue.svg" alt="Status: 0.1.x" />
   <a href="https://nest-native.dev/asyncapi/"><img src="https://img.shields.io/badge/docs-%40nest--native%2Fasyncapi-0f766e.svg" alt="Documentation" /></a>
 </p>
 
 > [!NOTE]
-> **Status: `0.1.1` (`0.x`).** Functional and fully tested (100% coverage), and
+> **Status: `0.2.0` (`0.x`).** Functional and fully tested (100% coverage), and
 > usable today — but the public API may still change before `1.0`. The decorator
 > set (`@AsyncApiChannel`, `@AsyncApiPub` / `@AsyncApiSub`, `@AsyncApiMessage`,
 > `@AsyncApiHeaders`, `@AsyncApiServer`), `getAsyncApiDocument()`, the docs route
