@@ -77,9 +77,9 @@
     }
   },
   "devDependencies": {
-    "@asyncapi/parser": "^3.6.1",
-    "@nestjs/common": "^11.1.28",
-    "@nestjs/core": "^11.1.28",
+    "@asyncapi/parser": "^3.6.3",
+    "@nestjs/common": "^11.1.29",
+    "@nestjs/core": "^11.1.29",
     "@nestjs/swagger": "^11.4.6",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
