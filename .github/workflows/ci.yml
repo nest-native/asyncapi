@@ -271,28 +271,50 @@ jobs:
           EOF
           sed -i "s/DURATION_PLACEHOLDER/${DURATION_SECONDS}s (${DURATION_MS}ms)/" "$GITHUB_STEP_SUMMARY"
 
-  nestjs-latest-major:
-    name: NestJS 12 compatibility (Node 22)
+  nestjs-compat:
+    name: NestJS ${{ matrix.nest.label }} compatibility (Node 22)
     runs-on: ubuntu-latest
-    # The published peer range allows @nestjs/common and @nestjs/core
-    # ^11 || ^12, but the devDependencies and the lockfile stay on 11 so the
-    # jobs above keep testing that end. This leg installs the 12 set on top
-    # with --no-save and is what makes the 12 end a tested claim rather than
-    # an assumption. Three details are load-bearing:
-    #   - `--workspaces --include-workspace-root`, not `--workspace-root`: the
-    #     samples pin @nestjs/* exactly, so with the latter npm satisfies each
-    #     sample's own 11 pin by nesting an 11 copy under sample/*/node_modules
-    #     and the sample matrix silently runs on 11 while the root reports 12.
-    #     The check script below fails the leg if any workspace resolves
-    #     another major or a nested copy.
-    #   - every @nestjs/* package any workspace declares is listed, in ONE
-    #     command. --no-save never persists the 12 edges, so a second
-    #     `npm install` would reconcile the tree back to the 11 lockfile; and
-    #     @nestjs/swagger and @nestjs/microservices peer on common/core ^12 at
-    #     12, so leaving either on 11 is an ERESOLVE, not a mixed tree.
-    #   - the version print reads the manifest by path: the 12 exports map
-    #     routes `./*` to `./*.js`, so `require('@nestjs/core/package.json')`
-    #     throws on 12.
+    # The published peer range is @nestjs/common and @nestjs/core ^11 || ^12
+    # (plus the optional @nestjs/swagger peer at ^11.4.4 || ^12). The
+    # devDependencies and the lockfile every other job installs stay on the
+    # 11.x in the middle of that range, so this matrix is what makes its two
+    # ENDS tested claims: each leg installs one end on top of the lockfile
+    # with --no-save and re-runs the build, the typecheck, the suite and the
+    # whole sample matrix against it.
+    #
+    # Three things keep a leg honest, because npm makes it easy to run a suite
+    # against a tree that is not the one you asked for:
+    # - --workspaces --include-workspace-root, not --workspace-root: the
+    #   samples pin @nestjs/* exactly, and with the latter npm satisfies each
+    #   sample's own 11 pin by nesting an 11 copy under it while the root
+    #   reports the leg's version. Every @nestjs/* package any workspace
+    #   declares goes in ONE command: --no-save never persists the edges, so
+    #   a second install reconciles the tree back to the lockfile.
+    # - the install log is grepped for ERESOLVE: when npm can override a peer
+    #   conflict it prints a warning and exits 0, and neither `npm ls` nor
+    #   --strict-peer-deps reports it afterwards.
+    # - scripts/check-nestjs-resolution.mjs proves the version from inside
+    #   every workspace (exactly, at the floor), fails on nested copies, and
+    #   re-checks every peer range on @nestjs/* against the hoisted copy.
+    # Node is not a dimension here on purpose: 22 floats to a current 22.x,
+    # which is what require(esm) on the 12 end needs (>=22.12), and the build
+    # job already covers 24.
+    strategy:
+      fail-fast: false
+      matrix:
+        nest:
+          # 11.0.1, not 11.0.0: nothing this package uses was added by a later
+          # 11.x (it imports @nestjs/* roots only), but every @nestjs/swagger
+          # 11.x peers on @nestjs/common and @nestjs/core ^11.0.1, so 11.0.1
+          # is the oldest framework that installs next to any swagger 11 at
+          # all. swagger is on its own version line and pinned at 11.4.4, the
+          # low end of this package's own optional peer range. Both pinned
+          # exactly so a downgrade that silently no-ops cannot pass as a floor
+          # run. Neither pin is a peer-range correction: no consumer can reach
+          # the versions below them.
+          - { label: '11 floor', spec: '11.0.1', swagger: '11.4.4' }
+          # ^12.0.0 floats, so a new 12.x patch is tested on the next run.
+          - { label: '12', spec: '^12.0.0', swagger: '^12.0.0' }
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -302,30 +324,43 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install with NestJS 12
+      - name: Install NestJS ${{ matrix.nest.label }} (this job only, never saved)
         run: |
           npm install --no-save --workspaces --include-workspace-root \
-            @nestjs/common@^12.0.0 @nestjs/core@^12.0.0 \
-            @nestjs/platform-express@^12.0.0 @nestjs/testing@^12.0.0 \
-            @nestjs/swagger@^12.0.0 @nestjs/microservices@^12.0.0
-          node -e "console.log('@nestjs/core', require('./node_modules/@nestjs/core/package.json').version)"
+            "@nestjs/common@${{ matrix.nest.spec }}" \
+            "@nestjs/core@${{ matrix.nest.spec }}" \
+            "@nestjs/platform-express@${{ matrix.nest.spec }}" \
+            "@nestjs/testing@${{ matrix.nest.spec }}" \
+            "@nestjs/microservices@${{ matrix.nest.spec }}" \
+            "@nestjs/swagger@${{ matrix.nest.swagger }}" \
+            > "$RUNNER_TEMP/nestjs-install.log" 2>&1 || { cat "$RUNNER_TEMP/nestjs-install.log"; exit 1; }
+          cat "$RUNNER_TEMP/nestjs-install.log"
 
-      - name: Prove every workspace resolves NestJS 12
-        run: node scripts/check-resolved-nestjs-major.mjs 12
+      - name: Fail on any peer conflict npm merely warned about
+        run: |
+          if grep -E 'ERESOLVE' "$RUNNER_TEMP/nestjs-install.log"; then
+            echo "::error::npm overrode a peer dependency instead of failing; this tree is not the graph the leg claims to test"
+            exit 1
+          fi
+
+      - name: Prove every workspace resolves NestJS ${{ matrix.nest.label }}
+        run: |
+          node scripts/check-nestjs-resolution.mjs "${{ matrix.nest.spec }}" \
+            "@nestjs/swagger@${{ matrix.nest.swagger }}"
 
       # The build comes first: the samples import @nest-native/asyncapi through
       # the workspace link, whose entry points live in packages/asyncapi/dist,
       # so the workspace-wide typecheck below needs the package built.
-      - name: Build package against NestJS 12
+      - name: Build package against NestJS ${{ matrix.nest.label }}
         run: npm run build --workspace @nest-native/asyncapi
 
-      - name: Typecheck every workspace against NestJS 12
+      - name: Typecheck every workspace against NestJS ${{ matrix.nest.label }}
         run: npm run typecheck
 
-      - name: Run the suite against NestJS 12
+      - name: Run the suite against NestJS ${{ matrix.nest.label }}
         run: npm test
 
-      - name: Run sample matrix against NestJS 12
+      - name: Run sample matrix against NestJS ${{ matrix.nest.label }}
         run: npm run ci:sample
 
   docs-site:
