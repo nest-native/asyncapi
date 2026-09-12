@@ -232,10 +232,10 @@ packages, using `node:test` and `c8`:
 - a sample matrix where every generated document passes `@asyncapi/parser`
 - a NestJS compatibility matrix (`nestjs-compat`): each end of the published
   peer range — `11.0.1` + `@nestjs/swagger@11.4.4` pinned exactly, and `^12` —
-  installed on top of the default 11 lockfile with `--no-save`, the install
-  log checked for peer conflicts npm merely warned about, every workspace
-  proven to resolve exactly that version, then typecheck, the suite, the
-  build, and the full sample matrix re-run against it
+  installed on top of the default 11 lockfile with `--no-save`, every
+  workspace proven to resolve exactly that version with every peer range in
+  the NestJS ecosystem satisfied, then typecheck, the suite, the build, and
+  the full sample matrix re-run against it
 
 Run the local gate with:
 
