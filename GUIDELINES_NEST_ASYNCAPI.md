@@ -234,15 +234,22 @@ entry should be one short paragraph with rationale.)
   Load-bearing details of a leg: `--workspaces --include-workspace-root`, not
   `--workspace-root`, because the samples pin `@nestjs/*` exactly and npm
   otherwise satisfies each sample's 11 pin with a nested 11 copy while the
-  root reports the leg's version; the install log is grepped for `ERESOLVE`,
-  because a peer conflict npm can override is a warning plus exit 0 that
-  neither `npm ls` nor `--strict-peer-deps` reports afterwards;
+  root reports the leg's version;
   `scripts/check-nestjs-resolution.mjs <spec> @nestjs/swagger@<spec>` runs in
   the leg and fails it on any version but the pinned one (a downgrade that
   silently no-ops leaves the lockfile's 11.x in place, and "still 11" passes
-  a major check), on any nested copy, and on any `@nestjs/*` peer range in
-  the tree the hoisted copy does not satisfy — so a green leg is a claim
-  about the pinned version only because of that check. Every `@nestjs/*`
+  a major check), on any nested copy, and on any peer range in the NestJS
+  ecosystem — every installed package at any depth that is `@nestjs/*` or
+  peers on one, this package's own published ranges included — that the
+  final tree does not satisfy, so a green leg is a claim about the pinned
+  version only because of that check. It is the gate because npm gives you
+  nothing better: a peer conflict npm can override is `npm warn ERESOLVE
+  overriding peer dependency` plus exit 0, which neither `npm ls` nor
+  `--strict-peer-deps` reports afterwards — and grepping the install log for
+  that warning was tried and dropped, because npm also prints it for
+  transitional states that end coherent (replacing `@nestjs/*` under a
+  package whose peers admit both majors prints dozens in the sibling repos
+  for a tree the check then proves clean). Every `@nestjs/*`
   package any workspace declares (`common`, `core`, `platform-express`,
   `testing`, `swagger`, `microservices`) goes in ONE install command:
   `--no-save` never persists the edges, so a second `npm install` reconciles

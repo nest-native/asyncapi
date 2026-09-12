@@ -15,13 +15,15 @@ package release is useful for users.
   `nestjs-compat` matrix: an `11 floor` leg pinned exactly to framework
   `11.0.1` with `@nestjs/swagger@11.4.4` (the oldest graph the published
   range can produce — every swagger 11.x peers on common/core `^11.0.1` — with
-  the reason next to the pins) and a `12` leg on `^12.0.0`. Each leg greps its
-  install log for `ERESOLVE` (npm overrides a peer conflict it can override
-  with a warning and exit 0) and runs `scripts/check-nestjs-resolution.mjs`
-  (replacing `check-resolved-nestjs-major.mjs`), which proves the exact
-  version from inside every workspace and re-checks every `@nestjs/*` peer
-  range in the tree. The same script still runs against the lockfile in
-  `release:check`. No published range changed.
+  the reason next to the pins) and a `12` leg on `^12.0.0`. Each leg runs
+  `scripts/check-nestjs-resolution.mjs` (replacing
+  `check-resolved-nestjs-major.mjs`), which proves the exact version from
+  inside every workspace and checks every peer range in the NestJS ecosystem
+  against the final tree (npm overrides a peer conflict it can override with
+  a warning and exit 0, and prints the same warning for transitional states
+  that end coherent, so the final tree is the gate, not the install log).
+  The same script still runs against the lockfile in `release:check`. No
+  published range changed.
 
 ## 0.3.0
 

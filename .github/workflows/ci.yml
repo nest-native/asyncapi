@@ -282,7 +282,7 @@ jobs:
     # with --no-save and re-runs the build, the typecheck, the suite and the
     # whole sample matrix against it.
     #
-    # Three things keep a leg honest, because npm makes it easy to run a suite
+    # Two things keep a leg honest, because npm makes it easy to run a suite
     # against a tree that is not the one you asked for:
     # - --workspaces --include-workspace-root, not --workspace-root: the
     #   samples pin @nestjs/* exactly, and with the latter npm satisfies each
@@ -290,12 +290,15 @@ jobs:
     #   reports the leg's version. Every @nestjs/* package any workspace
     #   declares goes in ONE command: --no-save never persists the edges, so
     #   a second install reconciles the tree back to the lockfile.
-    # - the install log is grepped for ERESOLVE: when npm can override a peer
-    #   conflict it prints a warning and exits 0, and neither `npm ls` nor
-    #   --strict-peer-deps reports it afterwards.
     # - scripts/check-nestjs-resolution.mjs proves the version from inside
     #   every workspace (exactly, at the floor), fails on nested copies, and
-    #   re-checks every peer range on @nestjs/* against the hoisted copy.
+    #   checks every peer range in the NestJS ecosystem against the tree the
+    #   suite will run on. That final-tree check is the gate; the install log
+    #   is printed for diagnosis only. npm prints `ERESOLVE overriding peer
+    #   dependency` and exits 0 both for a real override and for transitional
+    #   states that end coherent (replacing @nestjs/* under a package whose
+    #   peers admit both majors prints dozens in the sibling repos), so
+    #   grepping for it was tried and dropped.
     # Node is not a dimension here on purpose: 22 floats to a current 22.x,
     # which is what require(esm) on the 12 end needs (>=22.12), and the build
     # job already covers 24.
@@ -332,16 +335,7 @@ jobs:
             "@nestjs/platform-express@${{ matrix.nest.spec }}" \
             "@nestjs/testing@${{ matrix.nest.spec }}" \
             "@nestjs/microservices@${{ matrix.nest.spec }}" \
-            "@nestjs/swagger@${{ matrix.nest.swagger }}" \
-            > "$RUNNER_TEMP/nestjs-install.log" 2>&1 || { cat "$RUNNER_TEMP/nestjs-install.log"; exit 1; }
-          cat "$RUNNER_TEMP/nestjs-install.log"
-
-      - name: Fail on any peer conflict npm merely warned about
-        run: |
-          if grep -E 'ERESOLVE' "$RUNNER_TEMP/nestjs-install.log"; then
-            echo "::error::npm overrode a peer dependency instead of failing; this tree is not the graph the leg claims to test"
-            exit 1
-          fi
+            "@nestjs/swagger@${{ matrix.nest.swagger }}"
 
       - name: Prove every workspace resolves NestJS ${{ matrix.nest.label }}
         run: |

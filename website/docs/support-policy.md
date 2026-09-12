@@ -32,7 +32,9 @@ published range is `^11.0.0 || ^12.0.0`; the oldest installable 11 graph we run
 is framework `11.0.1` with `@nestjs/swagger@11.4.4`, pinned exactly, because
 every swagger 11.x peers on `@nestjs/common` and `@nestjs/core` `^11.0.1` (this
 package itself uses nothing added after 11.0.0). The other leg floats on
-`^12.0.0`. Each leg fails on any peer conflict npm merely warned about. When you document DTOs
+`^12.0.0`. Each leg proves every workspace resolves exactly that version and
+that every peer range in the NestJS ecosystem holds in the final tree, which
+catches the peer conflicts npm merely warns about. When you document DTOs
 on NestJS 12, install `@nestjs/swagger` 12 alongside (the optional peer range
 is `^11.4.4 || ^12.0.0`): its own peer range requires `@nestjs/common` and
 `@nestjs/core` 12.

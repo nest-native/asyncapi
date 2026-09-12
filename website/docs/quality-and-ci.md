@@ -151,21 +151,24 @@ npm test
 npm run ci:sample
 ```
 
-Before a leg runs anything, three gates prove the tree is the one it claims to
+Before a leg runs anything, two gates prove the tree is the one it claims to
 test, because npm makes it easy to end up with another one. `--workspaces
 --include-workspace-root` (not `--workspace-root`) is what puts the leg's
 version in front of the samples: they pin `@nestjs/*` exactly, so with
 `--workspace-root` alone npm satisfies each sample's 11 pin by nesting an 11
 copy under it, and the sample matrix runs on 11 while the root reports
-something else. The install log is grepped for `ERESOLVE`: a peer conflict npm
-can override produces `npm warn ERESOLVE overriding peer dependency` and exit
-0, and neither `npm ls` nor `--strict-peer-deps` reports it afterwards. And
-`scripts/check-nestjs-resolution.mjs` resolves the framework packages from
-inside every workspace and requires exactly the leg's version from the hoisted
-root copy — a nested copy fails even when its version is right — then
-re-checks every peer range on `@nestjs/*` in the tree (other `@nestjs/*`
-packages, and this package's own published ranges) against the hoisted copy.
-The same script runs with no argument in `release:check`, against the
-lockfile. Every `@nestjs/*` package any workspace declares goes in one install
+something else. And `scripts/check-nestjs-resolution.mjs` resolves the
+framework packages from inside every workspace and requires exactly the leg's
+version from the hoisted root copy — a nested copy fails even when its version
+is right — then checks every peer range in the NestJS ecosystem (every
+installed package at any depth that is `@nestjs/*` or peers on one, this
+package's own published ranges included) against the tree the suite will run
+on. That final-tree check is the gate because npm's own signal is not one: a
+peer conflict npm can override produces `npm warn ERESOLVE overriding peer
+dependency` and exit 0, neither `npm ls` nor `--strict-peer-deps` reports it
+afterwards, and the same warning appears for transitional states that end
+coherent, so grepping the install log for it is a false-positive class rather
+than a gate. The same script runs with no argument in `release:check`, against
+the lockfile. Every `@nestjs/*` package any workspace declares goes in one install
 command, because `--no-save` never persists the edges and a second
 `npm install` reconciles the tree back to the lockfile.
