@@ -78,11 +78,13 @@ NestJS 11 runs on any Node.js `>=22`. NestJS 12 is ESM-only, and a CommonJS
 application loads it through Node's `require(esm)`, which is behind a flag
 before Node.js 22.12.0 — so the 12 end of the range needs Node.js `>=22.12`.
 `engines` stays `>=22` because the 11 end does not need more. Both ends of the
-NestJS range are tested claims: the default install and lockfile stay on 11,
-and a dedicated CI leg (`nestjs-latest-major`) installs the 12 set on top,
-proves every workspace — package and samples alike — resolved 12 rather than a
-nested 11, and re-runs the suite, the build, and the whole sample matrix
-against it.
+NestJS range are tested claims: the default install and lockfile stay on the
+11.x in the middle of it, and the `nestjs-compat` CI matrix installs each end
+on top — `11.0.1` with `@nestjs/swagger@11.4.4`, pinned exactly (every swagger
+11.x peers on common/core `^11.0.1`, so that is the oldest graph the range can
+produce), and `^12` — proves every workspace, package and samples alike,
+resolved exactly that rather than a nested copy, and re-runs the suite, the
+build, and the whole sample matrix against it.
 
 ## Repository Layout
 
@@ -228,10 +230,12 @@ packages, using `node:test` and `c8`:
 - a Docusaurus docs-site build (`onBrokenLinks: throw`)
 - supply-chain audit for high-severity issues, across the package and docs site
 - a sample matrix where every generated document passes `@asyncapi/parser`
-- a NestJS 12 compatibility leg (`nestjs-latest-major`): the 12 set installed
-  on top of the default 11 lockfile with `--no-save`, every workspace proven to
-  resolve 12, then typecheck, the suite, the build, and the full sample matrix
-  re-run against it
+- a NestJS compatibility matrix (`nestjs-compat`): each end of the published
+  peer range — `11.0.1` + `@nestjs/swagger@11.4.4` pinned exactly, and `^12` —
+  installed on top of the default 11 lockfile with `--no-save`, the install
+  log checked for peer conflicts npm merely warned about, every workspace
+  proven to resolve exactly that version, then typecheck, the suite, the
+  build, and the full sample matrix re-run against it
 
 Run the local gate with:
 

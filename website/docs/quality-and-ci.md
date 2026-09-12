@@ -118,35 +118,54 @@ npm run ci:sample
 current `packages/asyncapi` version and that npm workspace resolution agrees with
 the lockfile.
 
-## NestJS 12 Compatibility Leg
+## NestJS Compatibility Matrix
 
 The published peer range is `@nestjs/common` / `@nestjs/core`
-`^11.0.0 || ^12.0.0`. The devDependencies and the lockfile stay on 11 — that is
-what `npm ci` and every job above test — and the `nestjs-latest-major` job makes
-the 12 end a tested claim rather than an assumption (the build runs before the
-workspace-wide typecheck because the samples import `@nest-native/asyncapi`
-through the workspace link, whose entry points live in `packages/asyncapi/dist`):
+`^11.0.0 || ^12.0.0`, plus the optional `@nestjs/swagger` peer at
+`^11.4.4 || ^12.0.0`. The devDependencies and the lockfile stay on an 11.x in
+the middle of that range — that is what `npm ci` and every job above test — and
+the `nestjs-compat` job is a matrix with one leg per end, so both ends are
+tested claims rather than assumptions. Each leg installs its end on top of the
+lockfile, then re-runs the build, the workspace-wide typecheck, the suite, and
+the sample matrix (the build runs first because the samples import
+`@nest-native/asyncapi` through the workspace link, whose entry points live in
+`packages/asyncapi/dist`).
+
+| Leg | Installs | Why this version |
+| --- | --- | --- |
+| `11 floor` | framework `11.0.1`, `@nestjs/swagger@11.4.4`, pinned exactly | The oldest graph the range can produce. This package imports `@nestjs/*` roots only and uses nothing added by a later 11.x, but every `@nestjs/swagger@11.x` peers on common/core `^11.0.1`, so 11.0.1 is the oldest framework that installs next to any swagger 11 at all; swagger is pinned at the low end of the package's own optional peer range. Exact pins mean a downgrade that silently no-ops fails instead of passing as "still 11". |
+| `12` | `^12.0.0` for both | The newest end; floats so a new 12.x patch is tested on the next run. |
+
+The floor leg, by hand:
 
 ```bash
 npm ci
 npm install --no-save --workspaces --include-workspace-root \
-  @nestjs/common@^12.0.0 @nestjs/core@^12.0.0 \
-  @nestjs/platform-express@^12.0.0 @nestjs/testing@^12.0.0 \
-  @nestjs/swagger@^12.0.0 @nestjs/microservices@^12.0.0
-node scripts/check-resolved-nestjs-major.mjs 12
+  @nestjs/common@11.0.1 @nestjs/core@11.0.1 \
+  @nestjs/platform-express@11.0.1 @nestjs/testing@11.0.1 \
+  @nestjs/microservices@11.0.1 @nestjs/swagger@11.4.4
+node scripts/check-nestjs-resolution.mjs 11.0.1 @nestjs/swagger@11.4.4
 npm run build --workspace @nest-native/asyncapi
 npm run typecheck
 npm test
 npm run ci:sample
 ```
 
-Three details are load-bearing. `--workspaces --include-workspace-root` (not
-`--workspace-root`) is what puts 12 in front of the samples: they pin `@nestjs/*`
-exactly, so with `--workspace-root` alone npm satisfies each sample's 11 pin by
-nesting an 11 copy under it, and the sample matrix runs on 11 while the root
-reports 12 — the check script fails the leg if any workspace resolves another
-major or a nested copy. Every `@nestjs/*` package any workspace declares goes in
-one command, because `--no-save` never persists the 12 edges and a second
-`npm install` reconciles the tree back to the 11 lockfile. And the version print
-reads `node_modules/@nestjs/core/package.json` by path, because the 12 exports
-map does not expose `package.json`.
+Before a leg runs anything, three gates prove the tree is the one it claims to
+test, because npm makes it easy to end up with another one. `--workspaces
+--include-workspace-root` (not `--workspace-root`) is what puts the leg's
+version in front of the samples: they pin `@nestjs/*` exactly, so with
+`--workspace-root` alone npm satisfies each sample's 11 pin by nesting an 11
+copy under it, and the sample matrix runs on 11 while the root reports
+something else. The install log is grepped for `ERESOLVE`: a peer conflict npm
+can override produces `npm warn ERESOLVE overriding peer dependency` and exit
+0, and neither `npm ls` nor `--strict-peer-deps` reports it afterwards. And
+`scripts/check-nestjs-resolution.mjs` resolves the framework packages from
+inside every workspace and requires exactly the leg's version from the hoisted
+root copy — a nested copy fails even when its version is right — then
+re-checks every peer range on `@nestjs/*` in the tree (other `@nestjs/*`
+packages, and this package's own published ranges) against the hoisted copy.
+The same script runs with no argument in `release:check`, against the
+lockfile. Every `@nestjs/*` package any workspace declares goes in one install
+command, because `--no-save` never persists the edges and a second
+`npm install` reconciles the tree back to the lockfile.

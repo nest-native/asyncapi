@@ -24,10 +24,15 @@ before Node.js 22.12.0 — so the 12 end of the range needs Node.js `>=22.12`.
 lifecycle hooks by component hierarchy level rather than registration order,
 which this package never depended on.
 Both ends of the NestJS range are tested: the default install and lockfile stay
-on 11, and the `nestjs-latest-major` CI leg installs the 12 set on top, proves
-every workspace resolved 12, and re-runs the suite, the build, and the full
-sample matrix — including the `@nestjs/swagger` schema chain and the
-`@nestjs/microservices` migration sample — against it. When you document DTOs
+on an 11.x in the middle of it, and the `nestjs-compat` CI matrix installs each
+end on top, proves every workspace resolved exactly that, and re-runs the suite,
+the build, and the full sample matrix — including the `@nestjs/swagger` schema
+chain and the `@nestjs/microservices` migration sample — against it. The
+published range is `^11.0.0 || ^12.0.0`; the oldest installable 11 graph we run
+is framework `11.0.1` with `@nestjs/swagger@11.4.4`, pinned exactly, because
+every swagger 11.x peers on `@nestjs/common` and `@nestjs/core` `^11.0.1` (this
+package itself uses nothing added after 11.0.0). The other leg floats on
+`^12.0.0`. Each leg fails on any peer conflict npm merely warned about. When you document DTOs
 on NestJS 12, install `@nestjs/swagger` 12 alongside (the optional peer range
 is `^11.4.4 || ^12.0.0`): its own peer range requires `@nestjs/common` and
 `@nestjs/core` 12.
