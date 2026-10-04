@@ -45,11 +45,11 @@
   },
   "devDependencies": {
     "@asyncapi/parser": "^3.6.3",
-    "@nestjs/common": "^11.2.1",
-    "@nestjs/core": "^11.2.1",
-    "@nestjs/platform-express": "^11.2.1",
+    "@nestjs/common": "^11.2.7",
+    "@nestjs/core": "^11.2.7",
+    "@nestjs/platform-express": "^11.2.7",
     "@nestjs/swagger": "^11.4.7",
-    "@nestjs/testing": "^11.2.1",
+    "@nestjs/testing": "^11.2.7",
     "@stryker-mutator/core": "^10.0.0",
     "@types/node": "^26.6.3",
     "@typescript-eslint/parser": "^8.70.1",
@@ -68,6 +68,10 @@
   },
   "packageManager": "npm@11.13.0",
   "overrides": {
-    "multer": "^2.2.0"
+    "@nestjs/swagger": {
+      "js-yaml": "^5.4.1"
+    },
+    "multer": "^2.4.0",
+    "qs": "^6.16.0"
   }
 }
