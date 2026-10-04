@@ -35,7 +35,7 @@
     "sample": "npm run showcase && npm run sample:focused",
     "ci:sample": "npm run sample",
     "ci": "npm run typecheck && npm run test:cov && npm run complexity:check && npm run complexity:report && npm run release:check && npm run ci:docs && npm run security:audit && npm run ci:sample",
-    "security:audit:docs:soft": "npm run security:audit:docs || node -e \"console.log('\\\\n[non-blocking] Docs-site advisories reported above. They live in the website/ tree, which is never published to consumers, so per the guidelines they do not gate releases \u2014 and nothing else reports them (Dependabot alerts do not cover this tree): fix them when a fix exists.')\""
+    "security:audit:docs:soft": "npm run security:audit:docs || node -e \"console.log('\\\\n[non-blocking] Docs-site advisories reported above. They live in the website/ tree, which is never published to consumers, so per the guidelines they do not gate releases \u2014 and Dependabot alerts do not reliably report them: fix them when a fix exists.')\""
   },
   "engines": {
     "node": ">=22"
