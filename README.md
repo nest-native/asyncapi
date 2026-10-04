@@ -222,7 +222,7 @@ packages, using `node:test` and `c8`:
 - package build, typecheck, and coverage on Node.js 22 and 24
 - coverage with `c8`, enforced at 100% for statements, branches, functions, and lines
 - sticky PR comments for coverage, test performance, and cognitive complexity
-- cognitive complexity enforcement with SonarJS threshold `15`
+- cognitive complexity enforcement with Biome, threshold `15`
 - package tarball validation, README/docs link validation, and a check that
   every workspace resolves the hoisted NestJS the lockfile declares (a nested
   copy under a sample means the lockfile drifted and the samples run a

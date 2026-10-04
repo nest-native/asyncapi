@@ -45,7 +45,8 @@ them to notice suspicious changes, then inspect the related test or sample.
 
 ## Cognitive Complexity
 
-Cognitive complexity uses SonarJS through ESLint:
+Cognitive complexity is enforced by Biome's
+`complexity/noExcessiveCognitiveComplexity` rule (config in `biome.json`):
 
 ```bash
 npm run complexity:check
@@ -55,7 +56,7 @@ npm run complexity:report
 `complexity:check` enforces the threshold of `15` per source function.
 `complexity:report` writes `complexity/cognitive-complexity-summary.json` with
 totals, per-file aggregates, and the most complex functions. The PR comment
-treats complexity as a review signal; the hard gate is the ESLint threshold.
+treats complexity as a review signal; the hard gate is the Biome threshold.
 
 ## Document Validation
 
