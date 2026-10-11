@@ -308,4 +308,4 @@ in [`sample/05-migration-nestjs-asyncapi`](https://github.com/nest-native/asynca
 - Source and issues: [github.com/nest-native/asyncapi](https://github.com/nest-native/asyncapi)
 - Changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - AsyncAPI 3.0 specification: [asyncapi.com](https://www.asyncapi.com/docs/reference/specification/v3.0.0)
-- The nest-native family: [@nest-native/drizzle](https://www.npmjs.com/package/@nest-native/drizzle), [@nest-native/trpc](https://www.npmjs.com/package/@nest-native/trpc)
+- The nest-native family: [nest-native.dev](https://nest-native.dev/)
