@@ -64,7 +64,7 @@
     "typescript": "^6.0.3",
     "zod": "^4.4.3"
   },
-  "packageManager": "npm@11.13.0",
+  "packageManager": "npm@11.21.1",
   "overrides": {
     "@nestjs/swagger": {
       "js-yaml": "^5.4.1"
